@@ -4,14 +4,14 @@
 #include "SoftwareSerial.h"
 #include "header.h"
 
-#define BAUDRATE_SIM800 9600
+#define BAUDRATE_SIM800 115200
 
 
 
 class SIM800_COM {
     public:
         SIM800_COM();
-        bool sendSMS(String messages);
+        bool sendSMS(String messages, String phoneNum);
         bool phoneCall();
         String readSMS();
         String getPhone();
@@ -20,7 +20,7 @@ class SIM800_COM {
         bool sleepSIM800();
         bool wakeUpSIM800();
         void replySerial();
-        
+           
         
 
     private:
