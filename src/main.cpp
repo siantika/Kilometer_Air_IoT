@@ -5,23 +5,24 @@
 
 
 SIM800_COM sim800; 
-String PHONE;
+String PHONE="";
 
 
 void setup() {
   Serial.begin(9600);
   Serial.println("Insert your phone number (send the message) :");
-  PHONE =  sim800.getPhone();
-  Serial.println(PHONE);
-  delay(1000);
-  sim800.sendSMS("Hai Ini adalah IoT kwh meter ,,,", PHONE);
- 
+
   
 }
 
 void loop() {
   
+  PHONE += sim800.getPhone();
+  Serial.println(PHONE);
+  sim800.sendSMS("Selamat Pagi, Berikut adalah tagihan minggu ini:", PHONE);
+  while(1);
   
  
   
 }
+

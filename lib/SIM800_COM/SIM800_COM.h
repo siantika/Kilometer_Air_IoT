@@ -4,7 +4,7 @@
 #include "SoftwareSerial.h"
 #include "header.h"
 
-#define BAUDRATE_SIM800 115200
+#define BAUDRATE_SIM800 9600
 
 
 
@@ -19,7 +19,7 @@ class SIM800_COM {
         String _parseData ;
         bool sleepSIM800();
         bool wakeUpSIM800();
-        void replySerial();
+        void replySerial(void);
            
         
 
