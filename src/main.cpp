@@ -21,19 +21,21 @@ void setup(void) {
 void loop(void) {
   
   // PHONE += sim800.getPhone();
-  // Serial.println(PHONE);
   // // store to eeprom
-  // writeStringToEEPROM(0, PHONE);
+  // writeStringToEEPROM(ADDR_PHONE, PHONE);
   // // only for checking (PHONE ="")
 
 
 
-  PHONE = readStringFromEEPROM(0);
-
-
+  PHONE = readStringFromEEPROM(ADDR_PHONE);
   Serial.println(PHONE);
   delay(500);
-  sim800.sendSMS("Selamat Pagi, Berikut adalah tagihan minggu ini:", PHONE);
+  String _contentOfmsg = "Selamat , Nomor Telpon Anda "+PHONE+" Telah terdaftar. Silakan ikuti langkah selanjutnya!";
+  sim800.sendSMS(_contentOfmsg, PHONE);
+  delay(5000); // should be at least 5 secs
+  sim800.phoneCall(PHONE);
+  delay(15000);
+  sim800.hangUpcall();
   while(1);
   
  

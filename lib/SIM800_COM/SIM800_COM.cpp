@@ -85,18 +85,29 @@ String SIM800_COM::readSMS(){
 }
 
 
+void SIM800_COM::phoneCall(String &phoneNum){
+  sim800Serial.println("AT");
+  replySerial();
+  sim800Serial.println("ATD+" + phoneNum +";");
+  replySerial();
+}
+
+void SIM800_COM::hangUpcall(){
+  sim800Serial.println("ATH");
+}
+
 
 // Private method
 void SIM800_COM::replySerial(){
   
-  // while (Serial.available()) 
-  // {
-  //   sim800Serial.write(Serial.read());//Forward what Serial received to Software Serial Port
-  // }
-  // while(sim800Serial.available()) 
-  // {
-  //   Serial.write(sim800Serial.read());//Forward what Software Serial received to Serial Port
-  // }
+  while (Serial.available()) 
+  {
+    sim800Serial.write(Serial.read());//Forward what Serial received to Software Serial Port
+  }
+  while(sim800Serial.available()) 
+  {
+    Serial.write(sim800Serial.read());//Forward what Software Serial received to Serial Port
+  }
   delay(500);  
 }
 

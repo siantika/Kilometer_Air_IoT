@@ -5,6 +5,7 @@
 #include "header.h"
 
 #define BAUDRATE_SIM800 9600
+#define DELAY_WAITING_CALL 15000 // secs
 
 
 
@@ -12,7 +13,6 @@ class SIM800_COM {
     public:
         SIM800_COM();
         bool sendSMS(String messages, String phoneNum);
-        bool phoneCall();
         String readSMS();
         String getPhone();
         String _dataIn;  
@@ -20,6 +20,8 @@ class SIM800_COM {
         bool sleepSIM800();
         bool wakeUpSIM800();
         void replySerial(void);
+        void phoneCall(String &phoneNum);
+        void hangUpcall(void);
            
         
 
@@ -29,9 +31,7 @@ class SIM800_COM {
         String _contentOfmsg;
         void serialFlush();
         String parseData();
-        
-        
-        
+                
 };
 
 #endif

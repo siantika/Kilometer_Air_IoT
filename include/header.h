@@ -8,5 +8,8 @@
 #define SIM_TX 11
 
 
+// CONST
+#define ADDR_PHONE 0 // epprom address to store PHONE NUMBER
+
 
 #endif
