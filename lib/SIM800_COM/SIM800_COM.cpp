@@ -86,45 +86,23 @@ String SIM800_COM::readSMS(){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Private function
+// Private method
 void SIM800_COM::replySerial(){
   
-  while (Serial.available()) 
-  {
-    sim800Serial.write(Serial.read());//Forward what Serial received to Software Serial Port
-  }
-  while(sim800Serial.available()) 
-  {
-    Serial.write(sim800Serial.read());//Forward what Software Serial received to Serial Port
-  }
+  // while (Serial.available()) 
+  // {
+  //   sim800Serial.write(Serial.read());//Forward what Serial received to Software Serial Port
+  // }
+  // while(sim800Serial.available()) 
+  // {
+  //   Serial.write(sim800Serial.read());//Forward what Software Serial received to Serial Port
+  // }
   delay(500);  
 }
 
 void SIM800_COM::serialFlush(){
   while(Serial.available() > 0) {
      char _t = Serial.read();
-    
   }
   while(sim800Serial.available() > 0){
      char _tSerial = sim800Serial.read();
