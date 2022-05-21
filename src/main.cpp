@@ -1,7 +1,5 @@
-
 #include <Arduino.h>
 #include "SIM800_COM.h"
-#include "SoftwareSerial.h"
 #include <EEPROM.h>
 
 
@@ -9,23 +7,36 @@
 SIM800_COM sim800; 
 String PHONE="";
 
+// function declaration
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 String readStringFromEEPROM(int addrOffset);
+void mainTest(void);
 
 void setup(void) {
   Serial.begin(9600);
-  Serial.println("Insert your phone number (send the message) :");
    EEPROM.begin();
+   sim800.sleepSIM800(2); // SIM800 properties for sleep (TESTING)
 }
 
 void loop(void) {
   
-  // PHONE += sim800.getPhone();
+ mainTest();
+  while(1);
+  
+}
+
+
+
+/* Functions */
+
+
+// test function --> all testing class/units etc are wrote here
+
+void mainTest(void){
+  //   PHONE += sim800.getPhone();
   // // store to eeprom
   // writeStringToEEPROM(ADDR_PHONE, PHONE);
   // // only for checking (PHONE ="")
-
-
 
   PHONE = readStringFromEEPROM(ADDR_PHONE);
   Serial.println(PHONE);
@@ -34,17 +45,37 @@ void loop(void) {
   sim800.sendSMS(_contentOfmsg, PHONE);
   delay(5000); // should be at least 5 secs
   sim800.phoneCall(PHONE);
-  delay(15000);
+  delay(10000);
   sim800.hangUpcall();
-  while(1);
-  
- 
-  
+  delay(1000);
+  Serial.println("Done");
+
 }
 
 
 
-/* Functions */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // EEPROM. src: https://roboticsbackend.com/arduino-write-string-in-eeprom/
 
@@ -53,7 +84,7 @@ void writeStringToEEPROM(int addrOffset, const String &strToWrite)
   byte len = strToWrite.length();
   EEPROM.write(addrOffset, len);
 
-  for (int i = 0; i < len; i++)
+  for (byte i = 0; i < len; i++)
   {
     EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
   }
@@ -65,7 +96,7 @@ String readStringFromEEPROM(int addrOffset)
   int newStrLen = EEPROM.read(addrOffset);
   char data[newStrLen + 1];
 
-  for (int i = 0; i < newStrLen; i++)
+  for (byte i = 0; i < newStrLen; i++)
   {
     data[i] = EEPROM.read(addrOffset + 1 + i);
   }
@@ -73,3 +104,5 @@ String readStringFromEEPROM(int addrOffset)
 
   return String(data);
 }
+
+
