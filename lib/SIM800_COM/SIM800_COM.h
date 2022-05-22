@@ -7,7 +7,14 @@
 #define BAUDRATE_SIM800 9600 //bps
 
 class SIM800_COM {
-    public:
+     private:
+        String _phoneNumber;
+        String _messages;
+        String _contentOfmsg;
+        String parseData();
+        void serialFlush();
+
+      public:
         SIM800_COM();
         String readSMS();
         String getPhone();
@@ -19,14 +26,7 @@ class SIM800_COM {
         void phoneCall(String &phoneNum);
         void hangUpcall(void);
            
-        
-
-    private:
-        String _phoneNumber;
-        String _messages;
-        String _contentOfmsg;
-        String parseData();
-        void serialFlush();
                 
 };
+
 #endif

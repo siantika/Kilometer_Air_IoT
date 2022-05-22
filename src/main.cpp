@@ -1,27 +1,38 @@
 #include <Arduino.h>
 #include "SIM800_COM.h"
 #include <EEPROM.h>
+#include "SensorInterface.h"
+#include  "header.h"
 
 
 
 SIM800_COM sim800; 
 String PHONE="";
 
+unsigned long currentTime;
+unsigned long startTime;
+uint8_t durationTime = 0;
+
+WaterFlow WL(PIN_WATER_FLOW); // create an instace of WaterFlow sensor
+
 // function declaration
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 String readStringFromEEPROM(int addrOffset);
-void mainTest(void);
+void mainTest_SIM800(void); // test only for SIM800
+void mainTest_waterFlow(void); // test only for water flow
+void setupWaterflow(void);
 
 void setup(void) {
   Serial.begin(9600);
-   EEPROM.begin();
-   sim800.sleepSIM800(2); // SIM800 properties for sleep (TESTING)
+   //EEPROM.begin();
+   //sim800.sleepSIM800(2); // SIM800 properties for sleep (TESTING)
+
+   setupWaterflow();
 }
 
 void loop(void) {
   
- mainTest();
-  while(1);
+ mainTest_waterFlow();
   
 }
 
@@ -31,8 +42,7 @@ void loop(void) {
 
 
 // test function --> all testing class/units etc are wrote here
-
-void mainTest(void){
+void mainTest_SIM800(void){
   //   PHONE += sim800.getPhone();
   // // store to eeprom
   // writeStringToEEPROM(ADDR_PHONE, PHONE);
@@ -49,6 +59,43 @@ void mainTest(void){
   sim800.hangUpcall();
   delay(1000);
   Serial.println("Done");
+
+}
+
+
+// water flow function test
+void setupWaterflow(void){
+  WL.init(PIN_WATER_FLOW);
+  pinMode(LED_BUILTIN,OUTPUT);
+  startTime = millis();
+}
+
+void mainTest_waterFlow(void){
+   currentTime = millis();
+  if (currentTime - startTime > 1000){
+    startTime = currentTime;
+
+    Serial.println("Capturing Data: ");
+    float dataVolume = WL.getWatervolume();
+
+
+    // get Duration 
+
+    if (dataVolume > 0.00) durationTime ++;
+    else {
+      Serial.println(durationTime);
+      durationTime = 0; // set to 0
+    }
+
+    // set an alarm
+    bool alarmState = WL.setVolumealarm(6,durationTime);
+if (alarmState == 1) digitalWrite(LED_BUILTIN, HIGH); // turn on LED while condition is reached.
+else digitalWrite(LED_BUILTIN,LOW);
+  
+
+    Serial.println(dataVolume);
+   
+  }
 
 }
 
