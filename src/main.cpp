@@ -3,8 +3,7 @@
 #include <EEPROM.h>
 #include "SensorInterface.h"
 #include  "header.h"
-
-
+#include  "IndicatorInterface.h"
 
 SIM800_COM sim800; 
 String PHONE="";
@@ -14,8 +13,10 @@ unsigned long startTime;
 uint8_t durationTime = 0;
 
 WaterFlow WL(PIN_WATER_FLOW); // create an instace of WaterFlow sensor
-
 BatteryLevel batteryLevel(PIN_BATTERY_LEVEL); // create an instace of Battery level sensor
+IndicatorInterface <TypeEnum::__OUTPUT> BUZZER(3); // create an instace called Buzzer
+IndicatorInterface<TypeEnum::__INPUT> Button_1(4);
+
 
 
 // function declaration
@@ -25,6 +26,7 @@ void mainTest_SIM800(void); // test only for SIM800
 void mainTest_waterFlow(void); // test only for water flow
 void setupWaterflow(void);
 void mainTest_BatteryLevel(void);
+void mainTest_IndicatorInterface(void);
 
 // SETUP ..
 void setup(void) {
@@ -36,7 +38,8 @@ void setup(void) {
 
 // MAIN FUNCTION
 void loop(void) {
-  mainTest_BatteryLevel();
+  mainTest_IndicatorInterface();
+  
 }
 
 
@@ -109,7 +112,11 @@ void mainTest_BatteryLevel(void){
 }
 
 
-
+void mainTest_IndicatorInterface(){
+bool readButton = Button_1.getInputdigital();
+Serial.println(readButton);
+delay(500);
+}
 
 
 
