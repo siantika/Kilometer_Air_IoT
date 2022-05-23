@@ -2,7 +2,7 @@
 
 
 SensorInterface ::SensorInterface(){
-    //pass
+ // pass
 }
 
 
@@ -51,3 +51,22 @@ bool WaterFlow::setVolumealarm(uint16_t timeThreshold, uint16_t onGoingTime){
 /* Public methods end here */
 
 /* *********** WaterFlow Class ends here *********** */
+
+
+/* *********** Battery Level Class *********** */
+// Constructor
+BatteryLevel::BatteryLevel(uint8_t _sensorPin){
+    // initilize pin mode
+    pinMode(_sensorPin, INPUT);
+}
+
+// private methods
+uint16_t BatteryLevel::readAnalogdata(){
+ return _analogData = analogRead(_sensorPin);
+}
+
+// public methods
+float BatteryLevel::getVoltage(){
+    // equation
+    return (_analogData/ADC_RESOLUTION * V_REF_5V); // NEED to find RIGHT EQUATION !!!!
+}

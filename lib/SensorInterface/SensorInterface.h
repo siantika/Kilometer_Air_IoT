@@ -3,9 +3,14 @@
 
 #include <Arduino.h>
 
+#define ADC_RESOLUTION 1024.0
+#define V_REF_5V 5.0
+
+
+
+
 class SensorInterface
 {
-
 protected:
 uint8_t _sensorPin;
    
@@ -24,13 +29,25 @@ class WaterFlow : SensorInterface{
 
     public:
     // Methods
-    float getWaterflow();
-    WaterFlow(uint8_t SensorPin);
+    WaterFlow(uint8_t _sensorPin); // constructor
+
+    float getWaterflow();    
     void init(uint8_t _sensorPin);
     bool setVolumealarm(uint16_t timeThreshold, uint16_t onGoingTime);
-    float  getWatervolume(void);
+    float getWatervolume(void);
 
 };
 
+// Derived Class
+class BatteryLevel : SensorInterface{
+    private:
+    uint16_t _analogData;
+    uint16_t readAnalogdata();
+
+
+    public:
+    BatteryLevel (uint8_t _sensorPin);
+    float getVoltage();
+};
 
 #endif

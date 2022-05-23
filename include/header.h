@@ -9,8 +9,11 @@
 #define SIM_RX 10
 #define SIM_TX 11
 
-/* Water Flow Sensor */
+/* Water Flow Sensor's pin */
 #define PIN_WATER_FLOW 2 // interrupt number 0
+
+/* Battery Level Sensor's pin */
+#define PIN_BATTERY_LEVEL A0
 
 /* ************* IO_Mapping ends here ************* */
 // CONST

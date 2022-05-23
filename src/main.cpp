@@ -15,32 +15,33 @@ uint8_t durationTime = 0;
 
 WaterFlow WL(PIN_WATER_FLOW); // create an instace of WaterFlow sensor
 
+BatteryLevel batteryLevel(PIN_BATTERY_LEVEL); // create an instace of Battery level sensor
+
+
 // function declaration
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 String readStringFromEEPROM(int addrOffset);
 void mainTest_SIM800(void); // test only for SIM800
 void mainTest_waterFlow(void); // test only for water flow
 void setupWaterflow(void);
+void mainTest_BatteryLevel(void);
 
+// SETUP ..
 void setup(void) {
   Serial.begin(9600);
    //EEPROM.begin();
    //sim800.sleepSIM800(2); // SIM800 properties for sleep (TESTING)
-
-   setupWaterflow();
+   //setupWaterflow();
 }
 
+// MAIN FUNCTION
 void loop(void) {
-  
- mainTest_waterFlow();
-  
+  mainTest_BatteryLevel();
 }
 
 
 
 /* Functions */
-
-
 // test function --> all testing class/units etc are wrote here
 void mainTest_SIM800(void){
   //   PHONE += sim800.getPhone();
@@ -80,7 +81,6 @@ void mainTest_waterFlow(void){
 
 
     // get Duration 
-
     if (dataVolume > 0.00) durationTime ++;
     else {
       Serial.println(durationTime);
@@ -92,19 +92,21 @@ void mainTest_waterFlow(void){
 if (alarmState == 1) digitalWrite(LED_BUILTIN, HIGH); // turn on LED while condition is reached.
 else digitalWrite(LED_BUILTIN,LOW);
   
-
     Serial.println(dataVolume);
    
   }
-
 }
 
 
 
+// Batter Level's Function (TESTING ONLY)
 
+void mainTest_BatteryLevel(void){
 
+  float readBatteryvolt = batteryLevel.getVoltage();
+  Serial.println();
 
-
+}
 
 
 
