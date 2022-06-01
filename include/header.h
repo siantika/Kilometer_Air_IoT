@@ -6,7 +6,7 @@
 // IO_Mapping file --> containing Pins definition
 
 /* LED INDICATOR */
-#define LED_INDICATOR 5
+#define LED_INDICATOR 4
 
 /* SIM800 */
 #define SIM_RX 10

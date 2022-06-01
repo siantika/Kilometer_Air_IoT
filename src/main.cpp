@@ -9,9 +9,9 @@
 /* Global Variables */
 bool g_optMode = 0; // default mode is 0 (Normal Operation)
 bool g_SMS_flag;
+float g_totalVolume;
 uint16_t g_timeDuration;
 String g_phoneNumber = "";
-float g_totalVolume;
 String _msgContent;
 
 unsigned long currentTime;
@@ -24,7 +24,8 @@ SIM800_COM sim800;
 WaterFlow WL(PIN_WATER_FLOW);
 BatteryLevel batteryLevel(PIN_BATTERY_LEVEL);
 IndicatorInterface<TypeEnum::__OUTPUT> BUZZER(3);
-IndicatorInterface<TypeEnum::__INPUT> Button_1(4);
+IndicatorInterface<TypeEnum::__INPUT> Button_1(5);
+IndicatorInterface<TypeEnum::__OUTPUT> LED_IND(LED_INDICATOR);
 DS3231 rtc(SDA, SCL);
 Time t;
 
@@ -48,29 +49,26 @@ void setup(void)
   sim800.sleepSIM800((byte)2); // SIM800 properties for sleep (TESTING)
   setupWaterflow();
   rtc.begin();
+  LED_IND.turnOn();
 }
 
 // MAIN FUNCTION
 void loop(void)
 {
+
   // set operationMode
   if (g_optMode == 0)
   {
-    // get hour
-
-    // Testing Only
-    //Serial.println(dailySendreport());
-    g_SMS_flag = dailySendreport(16,38,40); // hh/mm/ss
+    g_SMS_flag = dailySendreport(16, 38, 40); // hh/mm/ss Alarm for sending daily report
 
     if (g_SMS_flag)
     {
       //  do: read Battery
-      Serial.println("baca baterai...");
-
+      float _batLevel =  batteryLevel.getVoltage();
       //  send a message contained: battery level in V and total volume
-      _msgContent = "Selamat pagi, berikut informasi dari  " + String(ID_DEVICE) + " : Volume air dipakai = " + String(g_totalVolume) + ". Tegangan Baterai: "; // fill this with battery var.
+      _msgContent = "Selamat pagi, berikut informasi dari  " + String(ID_DEVICE) + " : Volume air dipakai = " + String(g_totalVolume) + "m3. Tegangan Baterai: "+String(_batLevel)+" V"; // fill this with battery var.
       sim800.sendSMS(_msgContent, g_phoneNumber);
-      g_SMS_flag = 0; 
+      g_SMS_flag = 0; // disable dailyReport sms
     }
 
     // read water flow every 1 sec
@@ -87,8 +85,9 @@ void loop(void)
   }
 
   // setup credential
-  //  else if g_optMode == 1
-  //      do
+  else if (g_optMode == 1)
+  {
+  }
 }
 
 /* Functions */
