@@ -5,6 +5,9 @@
 /* ************* IO_Mapping ************* */ 
 // IO_Mapping file --> containing Pins definition
 
+/* LED INDICATOR */
+#define LED_INDICATOR 5
+
 /* SIM800 */
 #define SIM_RX 10
 #define SIM_TX 11
@@ -16,8 +19,18 @@
 #define PIN_BATTERY_LEVEL A0
 
 /* ************* IO_Mapping ends here ************* */
-// CONST
-#define ADDR_PHONE 0 // epprom address to store PHONE NUMBER (interger)
 
+
+// CONST
+#define ID_DEVICE "KMA-01" // ID
+#define ADDR_PHONE 0 // epprom address to store PHONE NUMBER (interger)
+#define TIME_TO_REPORT 15 // hour (am)
+#define TIME_LIMIT_DISCHARGE 180 // sec
+#define PHONE_CALL_DELAY 20000 // sec
+#define FLOW_TIME_THRESHOLD 6 // sec
+#define WARNING_MSG "AIR TERUS MENGALIR! PERIKSA JALUR AIR!!!"
+#define WATER_READ_INTERVAL 1000 // sec
+#define ADC_RESOLUTION 1024.0
+#define V_REF_5V 5.0
 
 #endif

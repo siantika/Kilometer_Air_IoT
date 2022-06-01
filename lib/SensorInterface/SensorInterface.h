@@ -2,11 +2,7 @@
 #define SENSORINTERFACE_H
 
 #include <Arduino.h>
-
-#define ADC_RESOLUTION 1024.0
-#define V_REF_5V 5.0
-
-
+#include "header.h"
 
 
 class SensorInterface
@@ -23,7 +19,7 @@ class WaterFlow : SensorInterface{
     static volatile uint16_t _waterPulse; // an interrupt variable has to static type. Reference: https://arduino.stackexchange.com/questions/73287/interrupts-inside-a-class-attaching-to-the-function-of-the-class
     private:
     // variables
-    float WATER_CONST = 0.005454545 ; // it produces water flow's value in m3/sec
+    const float WATER_CONST =1.66667E-5; // it produces water flow's value in m3/sec
     // Methods
     static void countPulse();
 
