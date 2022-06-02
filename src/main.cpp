@@ -1,165 +1,154 @@
 #include <Arduino.h>
-#include "SIM800_COM.h"
 #include <EEPROM.h>
+#include "ComInterface.h"
 #include "SensorInterface.h"
 #include "header.h"
 #include "IndicatorInterface.h"
 #include "DS3231.h"
 
+// Debug console
+#define DEBUG                                     //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+
+#ifdef DEBUG                                      //Macros are usually in all capital letters.
+#define DPRINT(...) Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
+#define DPRINTLN(...) Serial.println(__VA_ARGS__) //DPRINTLN is a macro, debug print with new line
+#else
+#define DPRINT(...)   //now defines a blank line
+#define DPRINTLN(...) //now defines a blank line
+#endif
+
 /* Global Variables */
-bool g_optMode = 0; // default mode is 0 (Normal Operation)
-bool g_SMS_flag;
-float g_totalVolume;
-uint16_t g_timeDuration;
-String g_phoneNumber = "";
-String _msgContent;
+volatile bool g_opt_mode;
+bool g_sms_flag;
+uint8_t g_duration_time;
+float g_total_volume;
+String g_phone_number;
+String g_msg_content;
+unsigned long g_current_time;
+unsigned long g_prevTime;
 
-unsigned long currentTime;
-unsigned long prevTime = 0;
-
-uint8_t durationTime = 0;
-
-/* create instances */
-SIM800_COM sim800;
-WaterFlow WL(PIN_WATER_FLOW);
+/* Creating instances */
+ComInterface sim800;
+WaterFlow waterFlow(PIN_WATER_FLOW);
 BatteryLevel batteryLevel(PIN_BATTERY_LEVEL);
-IndicatorInterface<TypeEnum::__OUTPUT> BUZZER(3);
-IndicatorInterface<TypeEnum::__INPUT> Button_1(5);
-IndicatorInterface<TypeEnum::__OUTPUT> LED_IND(LED_INDICATOR);
+IndicatorInterface<TypeEnum::__INPUT> buttonOpt(PIN_BUTTON_OPT); // fixing ... !!!!!!!!!!!!!!!!!!!
+IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator(PIN_LED_INDICATOR);
 DS3231 rtc(SDA, SCL);
 Time t;
 
 /* forward functions declaration */
-void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 String readStringFromEEPROM(int addrOffset);
-void mainTest_SIM800(void);    // test only for SIM800
-void mainTest_waterFlow(void); // test only for water flow
-void setupWaterflow(void);
-void mainTest_BatteryLevel(void);
-void mainTest_IndicatorInterface(void);
-// get Hour func
-bool dailySendreport(uint8_t _hour, uint8_t _minute, uint8_t _sec);
-void calculateVolume_timeDuration(void);
+void writeStringToEEPROM(int addrOffset, const String &strToWrite);
+bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec);
+void periodicTasks(void);
 
 // SETUP ..
 void setup(void)
 {
   Serial.begin(9600);
   EEPROM.begin();
-  sim800.sleepSIM800((byte)2); // SIM800 properties for sleep (TESTING)
-  setupWaterflow();
   rtc.begin();
-  LED_IND.turnOn();
+  sim800.sleepSIM800(2); // Sleep mode 2 (src: https://simcom.ee/documents/SIM800/SIM800_Hardware%20Design_V1.09.pdf)
+  waterFlow.init();
+
+  // initial value
+  g_opt_mode = 0;
+  g_phone_number = "";
+  g_prevTime = 0;
+  g_duration_time = 0;
 }
 
 // MAIN FUNCTION
 void loop(void)
 {
 
-  // set operationMode
-  if (g_optMode == 0)
+  // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
+  if (g_opt_mode == 0)
   {
-    g_SMS_flag = dailySendreport(16, 38, 40); // hh/mm/ss Alarm for sending daily report
 
-    if (g_SMS_flag)
+    // set alarm for sending daily report once. Set it on 7 am everyday
+    g_sms_flag = dailySendReport(7,00,00); // hh,mm,ss
+
+    if (g_sms_flag)
     {
       //  do: read Battery
-      float _batLevel =  batteryLevel.getVoltage();
-      //  send a message contained: battery level in V and total volume
-      _msgContent = "Selamat pagi, berikut informasi dari  " + String(ID_DEVICE) + " : Volume air dipakai = " + String(g_totalVolume) + "m3. Tegangan Baterai: "+String(_batLevel)+" V"; // fill this with battery var.
-      sim800.sendSMS(_msgContent, g_phoneNumber);
-      g_SMS_flag = 0; // disable dailyReport sms
+      float _batLevel = batteryLevel.getVoltage();
+      //  send a message contained: battery level in V and total volume in m3
+      g_msg_content = "Selamat pagi, berikut informasi dari  " + String(ID_DEVICE) + " : Volume air dipakai = " + String(g_total_volume) + "m3. Tegangan Baterai: " + String(_batLevel) + " V"; // fill this with battery var.
+      sim800.sendSMS(g_msg_content, g_phone_number);
+      g_sms_flag = 0; // disable dailyReport sms
     }
 
-    // read water flow every 1 sec
-    calculateVolume_timeDuration();
-    // set alarm
-    bool alarmState = WL.setVolumealarm(FLOW_TIME_THRESHOLD, durationTime);
-    if (alarmState == 1)
+    // run periodicTasks function (every 1 sec)
+    periodicTasks();
+
+    // set and check alarm for water leaking
+    bool mAlarm_state = waterFlow.setVolumeAlarm(FLOW_TIME_THRESHOLD, g_duration_time);
+    if (mAlarm_state)
     {
-      sim800.phoneCall(g_phoneNumber);
+      sim800.phoneCall(g_phone_number);
       delay(PHONE_CALL_DELAY);
-      // _msgContent = WARNING_MSG;
-      sim800.sendSMS(_msgContent, g_phoneNumber);
+      g_msg_content = WARNING_MSG;
+      sim800.sendSMS(g_msg_content, g_phone_number);
     }
   }
 
   // setup credential
-  else if (g_optMode == 1)
+  else if (g_opt_mode == 1)
   {
   }
 }
 
 /* Functions */
 
-bool dailySendreport(uint8_t _hour, uint8_t _minute, uint8_t _sec)
+bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec)
 {
-  // alarm to execute
   t = rtc.getTime();
-  uint8_t _hourNow = t.hour;
-  uint8_t _minuteNow = t.min;
-  uint8_t _secNow = t.sec;
-  return (_hour == _hourNow && _minute == _minuteNow && _sec == _secNow);
+  return (hour == t.hour && minute == t.min && sec == t.sec);
 }
 
-// dailyTask every 1 sec
-void calculateVolume_timeDuration(void)
+/* periodic tasks */
+// It gets water volume and water flow. its store in g_total_volume and mWater_flow(private)
+// it gets time duration and store it in g_duration_time
+void periodicTasks(void)
 {
-  currentTime = millis();
-  if (currentTime - prevTime >= WATER_READ_INTERVAL)
-  {
-    prevTime = currentTime;
-    // convert
-    float dataVolume = WL.getWatervolume();
+  g_current_time = millis();
 
-    g_totalVolume += dataVolume;
-    Serial.print(" total volume air: ");
-    Serial.println(g_totalVolume);
-    Serial.print(" Debit air: ");
-    Serial.println(dataVolume);
+  if (g_current_time - g_prevTime >= WATER_READ_INTERVAL)
+  {
+    g_prevTime = g_current_time;
+
+    float mWater_flow = waterFlow.getWaterVolume();
+
+    g_total_volume += mWater_flow;
+
+    DPRINT(F("Total water volume (m3): "));
+    DPRINTLN(g_total_volume);
+    DPRINT(F("Water flow (m3/s): "));
+    DPRINTLN(mWater_flow);
+
     // get time duration when water is flowing
-    if (dataVolume > 0.00)
-      durationTime++;
+    if (mWater_flow > 0.00)
+      g_duration_time++;
     else
     {
-      Serial.println(durationTime);
-      durationTime = 0; // reset duration time
+      DPRINT(F("Water was flowing in : "));
+      DPRINT(g_duration_time);
+      DPRINTLN(F(" seconds"));
+      DPRINTLN(F("-------------------------------------------\n"));
+
+      g_duration_time = 0; // reset duration time
     }
   }
-}
-
-// test function --> all testing class/units etc are wrote here
-
-// water flow function test
-void setupWaterflow(void)
-{
-  WL.init(PIN_WATER_FLOW);
-  pinMode(LED_BUILTIN, OUTPUT);
-}
-
-// Batter Level's Function (TESTING ONLY)
-
-void mainTest_BatteryLevel(void)
-{
-
-  float readBatteryvolt = batteryLevel.getVoltage();
-  Serial.println();
-}
-
-void mainTest_IndicatorInterface()
-{
-  bool readButton = Button_1.getInputdigital();
-  Serial.println(readButton);
-  delay(500);
 }
 
 // EEPROM. src: https://roboticsbackend.com/arduino-write-string-in-eeprom/
 void writeStringToEEPROM(int addrOffset, const String &strToWrite)
 {
-  byte len = strToWrite.length();
-  EEPROM.write(addrOffset, len);
+  byte mLen = strToWrite.length();
+  EEPROM.write(addrOffset, mLen);
 
-  for (byte i = 0; i < len; i++)
+  for (byte i = 0; i < mLen; i++)
   {
     EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
   }
@@ -167,14 +156,14 @@ void writeStringToEEPROM(int addrOffset, const String &strToWrite)
 
 String readStringFromEEPROM(int addrOffset)
 {
-  int newStrLen = EEPROM.read(addrOffset);
-  char data[newStrLen + 1];
+  int mNewStrLen = EEPROM.read(addrOffset);
+  char mData[mNewStrLen + 1];
 
-  for (byte i = 0; i < newStrLen; i++)
+  for (byte i = 0; i < mNewStrLen; i++)
   {
-    data[i] = EEPROM.read(addrOffset + 1 + i);
+    mData[i] = EEPROM.read(addrOffset + 1 + i);
   }
-  data[newStrLen] = '\0';
+  mData[mNewStrLen] = '\0';
 
-  return String(data);
+  return String(mData);
 }

@@ -14,11 +14,12 @@ float WaterFlow::getWaterFlow()
 {
     float mQ; // Water flows in m3/sec unit.
     mQ = CUBIC_CONST * sWater_pulse;
+    Serial.println(sWater_pulse);
     sWater_pulse = 0.0;
     return mQ;
 }
 
-void WaterFlow::sCountPulse()
+ void WaterFlow::sCountPulse()
 {
     sWater_pulse++;
 }
