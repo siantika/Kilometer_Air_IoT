@@ -12,26 +12,26 @@
 #include "IndicatorInterface.h"
 
 // For INPUT MODE
-IndicatorInterface<TypeEnum::__INPUT>::IndicatorInterface(uint8_t _sensorPin){
-   sensorPin = _sensorPin;
-   pinMode(sensorPin, INPUT);
+IndicatorInterface<TypeEnum::__INPUT>::IndicatorInterface(uint8_t sensor_pin){
+   mSensor_pin = sensor_pin;
+   pinMode(sensor_pin, INPUT);
 }
 
-bool IndicatorInterface<TypeEnum::__INPUT>::getInputdigital(void){
-    return digitalRead(sensorPin);
+bool IndicatorInterface<TypeEnum::__INPUT>::getInputDigital(void){
+    return digitalRead(mSensor_pin);
 }
 
 // For OUTPUT MODE
-IndicatorInterface<TypeEnum::__OUTPUT>::IndicatorInterface(uint8_t _sensorPin){
-   sensorPin = _sensorPin;
-   pinMode(sensorPin, OUTPUT);
+IndicatorInterface<TypeEnum::__OUTPUT>::IndicatorInterface(uint8_t sensor_pin){
+   mSensor_pin = sensor_pin;
+   pinMode(mSensor_pin, OUTPUT);
 }
 bool IndicatorInterface<TypeEnum::__OUTPUT>::turnOn(void){
-    digitalWrite(sensorPin, HIGH);
+    digitalWrite(mSensor_pin, HIGH);
     return 1;
 }
 
 bool IndicatorInterface<TypeEnum::__OUTPUT>::turnOff(void){
-    digitalWrite(sensorPin, LOW);
+    digitalWrite(mSensor_pin, LOW);
     return 0;
 }

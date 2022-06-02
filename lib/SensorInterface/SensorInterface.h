@@ -4,45 +4,44 @@
 #include <Arduino.h>
 #include "header.h"
 
-
 class SensorInterface
 {
 protected:
-uint8_t _sensorPin;
-   
+    uint8_t sensor_pin;
+
 public:
     SensorInterface();
 };
 
-// Derived class 
-class WaterFlow : SensorInterface{
-    static volatile uint16_t _waterPulse; // an interrupt variable has to static type. Reference: https://arduino.stackexchange.com/questions/73287/interrupts-inside-a-class-attaching-to-the-function-of-the-class
-    private:
+// Derived class
+class WaterFlow : SensorInterface
+{
+    static volatile uint16_t sWater_pulse; // an interrupt variable has to be static type. Reference: https://arduino.stackexchange.com/questions/73287/interrupts-inside-a-class-attaching-to-the-function-of-the-class
+
+private:
     // variables
-    const float WATER_CONST =1.66667E-5; // it produces water flow's value in m3/sec
+    const float CUBIC_CONST = 1.66667E-5; // it produces water flow's value in m3/sec
     // Methods
-    static void countPulse();
+    static void sCountPulse();
 
-    public:
+public:
     // Methods
-    WaterFlow(uint8_t _sensorPin); // constructor
-
-    float getWaterflow();    
-    void init(uint8_t _sensorPin);
-    bool setVolumealarm(uint16_t timeThreshold, uint16_t onGoingTime);
-    float getWatervolume(void);
-
+    WaterFlow(uint8_t sensor_pin);
+    float getWaterFlow();
+    void init();
+    bool setVolumeAlarm(uint16_t time_threshold, uint16_t on_going_time);
+    float getWaterVolume(void);
 };
 
 // Derived Class
-class BatteryLevel : SensorInterface{
-    private:
-    uint16_t _analogData;
-    uint16_t readAnalogdata();
+class BatteryLevel : SensorInterface
+{
+private:
+    uint16_t mAnalog_data;
+    uint16_t readAnalogData();
 
-
-    public:
-    BatteryLevel (uint8_t _sensorPin);
+public:
+    BatteryLevel(uint8_t sensor_pin);
     float getVoltage();
 };
 

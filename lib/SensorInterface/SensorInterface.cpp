@@ -2,54 +2,49 @@
 
 SensorInterface ::SensorInterface()
 {
-    // pass
+    //pass
 }
 
-// Derived Classess
-
+// Derived Class
 /* *********** WaterFlow Class *********** */
-
-volatile uint16_t WaterFlow::_waterPulse; // an instance to Interrupt function
+volatile uint16_t WaterFlow::sWater_pulse; // an instance to Interrupt function
 
 // Private Methods start here
-
-float WaterFlow::getWaterflow()
+float WaterFlow::getWaterFlow()
 {
-    float _Q; // Water flows in m3/sec unit.
-    uint16_t _freqPulse = _waterPulse;
-    _Q = WATER_CONST * _freqPulse;
-    _waterPulse = 0.0;
-    return _Q;
+    float mQ; // Water flows in m3/sec unit.
+    mQ = CUBIC_CONST * sWater_pulse;
+    sWater_pulse = 0.0;
+    return mQ;
 }
 
-void WaterFlow::countPulse()
+void WaterFlow::sCountPulse()
 {
-    _waterPulse++;
+    sWater_pulse++;
 }
 /* Private Methods ends here */
 
 // Public Methods start here
-WaterFlow::WaterFlow(uint8_t SensorPin)
+WaterFlow::WaterFlow(uint8_t sensor_pin)
 {
-    _sensorPin = SensorPin;
-    _waterPulse = 0;
+    sensor_pin = sensor_pin;
+    sWater_pulse = 0;
 }
 
-void WaterFlow::init(uint8_t _sensorPin)
+void WaterFlow::init()
 {
-    // declare interrupt mode
-    pinMode(_sensorPin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(_sensorPin), WaterFlow::countPulse, RISING);
+    pinMode(sensor_pin, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(sensor_pin), WaterFlow::sCountPulse, RISING);
 }
 
-float WaterFlow::getWatervolume()
+float WaterFlow::getWaterVolume()
 {
-    return getWaterflow();
+    return getWaterFlow();
 }
 
-bool WaterFlow::setVolumealarm(uint16_t timeThreshold, uint16_t onGoingTime)
+bool WaterFlow::setVolumeAlarm(uint16_t time_threshold, uint16_t on_going_time)
 {
-    if (onGoingTime >= timeThreshold)
+    if (on_going_time >= time_threshold)
         return 1;
     else
         return 0;
@@ -60,15 +55,15 @@ bool WaterFlow::setVolumealarm(uint16_t timeThreshold, uint16_t onGoingTime)
 
 /* *********** Battery Level Class *********** */
 // Constructor
-BatteryLevel::BatteryLevel(uint8_t sensorPin)
+BatteryLevel::BatteryLevel(uint8_t sensor_pin)
 {
-    _sensorPin = sensorPin;
+    sensor_pin = sensor_pin;
 }
 
 // private methods
-uint16_t BatteryLevel::readAnalogdata()
+uint16_t BatteryLevel::readAnalogData()
 {
-    return _analogData = analogRead(_sensorPin);
+    return mAnalog_data = analogRead(sensor_pin);
 }
 
 // public methods
@@ -76,16 +71,15 @@ float BatteryLevel::getVoltage()
 {
     // src: https://www.electronicshub.org/interfacing-voltage-sensor-with-arduino/#Code
     //Resistors value
-    float _vOut; // input voltage from sensor
-    float _vRead;
-    const float R1 = 18800.0; // ohm (MAKE SURE THE VALUE OF THE RESISTANCE !!!)
-    const float R2 = 4760.0; // ohm
+    float mVoltage_in; // input voltage from sensor
+    float mVoltage_read;
+    const float mR1 = 18800.0; // ohm (MAKE SURE THE VALUE OF THE RESISTANCE IS PRECISE!!!)
+    const float mR2 = 4760.0;  // ohm
 
-    _analogData = BatteryLevel::readAnalogdata(); // get analog data
+    mAnalog_data = BatteryLevel::readAnalogData(); // 
 
-    // equation
-   _vOut = _analogData / ADC_RESOLUTION * V_REF_5V; 
-   _vRead = _vOut / (R2/(R1+R2));
+    mVoltage_in = mAnalog_data / ADC_RESOLUTION * V_REF_5V;
+    mVoltage_read = mVoltage_in / (mR2 / (mR1 + mR2)); // converting to volt
 
-   return _vRead;
+    return mVoltage_read;
 }
