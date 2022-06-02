@@ -14,7 +14,6 @@ float WaterFlow::getWaterFlow()
 {
     float mQ; // Water flows in m3/sec unit.
     mQ = CUBIC_CONST * sWater_pulse;
-    Serial.println(sWater_pulse);
     sWater_pulse = 0.0;
     return mQ;
 }
@@ -28,7 +27,7 @@ float WaterFlow::getWaterFlow()
 // Public Methods start here
 WaterFlow::WaterFlow(uint8_t sensor_pin)
 {
-    sensor_pin = sensor_pin;
+    this->sensor_pin = sensor_pin; 
     sWater_pulse = 0;
 }
 
