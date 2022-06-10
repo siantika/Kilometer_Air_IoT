@@ -7,7 +7,7 @@
 #include "DS3231.h"
 
 // Debug console
-#define DEBUG                                     //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+#define DEBUG //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
 #ifdef DEBUG                                      //Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
@@ -22,6 +22,7 @@ volatile bool g_opt_mode;
 bool g_sms_flag;
 uint8_t g_duration_time;
 float g_total_volume;
+const float CALLIBRATION_KWA = 48E-5; // Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 String g_phone_number;
 String g_msg_content;
 unsigned long g_current_time;
@@ -56,6 +57,7 @@ void setup(void)
   g_phone_number = "";
   g_prevTime = 0;
   g_duration_time = 0;
+  g_total_volume += CALLIBRATION_KWA; // add callibration const
 }
 
 // MAIN FUNCTION
@@ -63,11 +65,12 @@ void loop(void)
 {
 
   // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
+  
   if (g_opt_mode == 0)
   {
 
     // set alarm for sending daily report once. Set it on 7 am everyday
-    g_sms_flag = dailySendReport(7,00,00); // hh,mm,ss
+    g_sms_flag = dailySendReport(7, 00, 00); // hh,mm,ss
 
     if (g_sms_flag)
     {
@@ -84,6 +87,7 @@ void loop(void)
 
     // set and check alarm for water leaking
     bool mAlarm_state = waterFlow.setVolumeAlarm(FLOW_TIME_THRESHOLD, g_duration_time);
+
     if (mAlarm_state)
     {
       sim800.phoneCall(g_phone_number);

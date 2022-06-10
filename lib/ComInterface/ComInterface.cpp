@@ -53,7 +53,7 @@ bool ComInterface::sendSMS(String &messages, String &phoneNum){
     sim800Serial.print(messages); // put content of messages 
     DEBUG_PRINT
     SIM_NORMAL_OPT_DELAY
-    sim800Serial.write(26); // it likes "ctrl+z", sending a message.
+    sim800Serial.write(26); // it likes "ctrl+z", enter keyword.
     DEBUG_PRINT
     delay(5000); // should put this delay !!!
 }
