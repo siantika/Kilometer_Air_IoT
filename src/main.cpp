@@ -4,7 +4,6 @@
 #include "SensorInterface.h"
 #include "header.h"
 #include "IndicatorInterface.h"
-#include "DS3231.h"
 
 // Debug console
 #define DEBUG //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
@@ -34,8 +33,6 @@ WaterFlow waterFlow(PIN_WATER_FLOW);
 BatteryLevel batteryLevel(PIN_BATTERY_LEVEL);
 IndicatorInterface<TypeEnum::__INPUT> buttonOpt(PIN_BUTTON_OPT); // fixing ... !!!!!!!!!!!!!!!!!!!
 IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator(PIN_LED_INDICATOR);
-DS3231 rtc(SDA, SCL);
-Time t;
 
 /* forward functions declaration */
 String readStringFromEEPROM(int addrOffset);
@@ -48,7 +45,6 @@ void setup(void)
 {
   Serial.begin(9600);
   EEPROM.begin();
-  rtc.begin();
   sim800.sleepSIM800(2); // Sleep mode 2 (src: https://simcom.ee/documents/SIM800/SIM800_Hardware%20Design_V1.09.pdf)
   waterFlow.init();
 
@@ -70,7 +66,6 @@ void loop(void)
   {
 
     // set alarm for sending daily report once. Set it on 7 am everyday
-    g_sms_flag = dailySendReport(7, 00, 00); // hh,mm,ss
 
     if (g_sms_flag)
     {
@@ -104,12 +99,6 @@ void loop(void)
 }
 
 /* Functions */
-
-bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec)
-{
-  t = rtc.getTime();
-  return (hour == t.hour && minute == t.min && sec == t.sec);
-}
 
 /* periodic tasks */
 // It gets water volume and water flow. its store in g_total_volume and mWater_flow(private)
