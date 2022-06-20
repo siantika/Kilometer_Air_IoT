@@ -21,6 +21,7 @@ class ComInterface {
         String mData_in;  
         String mParse_data ;
         bool sendSMS(String &messages, String &phoneNum);
+        bool checkSimSerial();
         void sleepSIM800(byte sleep_mode);
         void replySerial(void);
         void phoneCall(String &phoneNum);

@@ -6,20 +6,23 @@
 #include "IndicatorInterface.h"
 
 // Debug console
-#define DEBUG //If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+//#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
-#ifdef DEBUG                                      //Macros are usually in all capital letters.
-#define DPRINT(...) Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
-#define DPRINTLN(...) Serial.println(__VA_ARGS__) //DPRINTLN is a macro, debug print with new line
+#ifdef DEBUG                                      // Macros are usually in all capital letters.
+#define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
+#define DPRINTLN(...) Serial.println(__VA_ARGS__) // DPRINTLN is a macro, debug print with new line
 #else
-#define DPRINT(...)   //now defines a blank line
-#define DPRINTLN(...) //now defines a blank line
+#define DPRINT(...)   // now defines a blank line
+#define DPRINTLN(...) // now defines a blank line
 #endif
 
 /* Global Variables */
 volatile bool g_opt_mode;
 bool g_sms_flag;
 uint8_t g_duration_time;
+uint8_t g_state;
+bool mLed_state;
+int g_alarm_water_threshold = 0;
 float g_total_volume;
 const float CALLIBRATION_KWA = 48E-5; // Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 String g_phone_number;
@@ -39,8 +42,10 @@ String readStringFromEEPROM(int addrOffset);
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec);
 void periodicTasks(void);
+void blinkLedIndicator(uint16_t mLed_interval);
+void nextStateFunction(void);
 
-// SETUP ..
+// Setup
 void setup(void)
 {
   Serial.begin(9600);
@@ -54,52 +59,126 @@ void setup(void)
   g_prevTime = 0;
   g_duration_time = 0;
   g_total_volume += CALLIBRATION_KWA; // add callibration const
+  g_state = 1;                        // default g_state = 0.
+
+  // load value
+  // phone number
+  // last of water volume
 }
 
 // MAIN FUNCTION
 void loop(void)
 {
-
   // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
-  
-  if (g_opt_mode == 0)
+  uint8_t g_state_prev = g_state;
+  Serial.println(g_state_prev);
+
+  switch (g_state)
   {
 
-    // set alarm for sending daily report once. Set it on 7 am everyday
+  // Operation mode 1. Setup a credential.
+  case 1:
+  {
+    // This is initial operation 1 case.
+    ledIndicator.turnOn();
+    mLed_state = 1; // ON = 1 . OFF = 0
+    g_prevTime = 0;
 
-    if (g_sms_flag)
-    {
-      //  do: read Battery
-      float _batLevel = batteryLevel.getVoltage();
-      //  send a message contained: battery level in V and total volume in m3
-      g_msg_content = "Selamat pagi, berikut informasi dari  " + String(ID_DEVICE) + " : Volume air dipakai = " + String(g_total_volume) + "m3. Tegangan Baterai: " + String(_batLevel) + " V"; // fill this with battery var.
-      sim800.sendSMS(g_msg_content, g_phone_number);
-      g_sms_flag = 0; // disable dailyReport sms
-    }
-
-    // run periodicTasks function (every 1 sec)
-    periodicTasks();
-
-    // set and check alarm for water leaking
-    bool mAlarm_state = waterFlow.setVolumeAlarm(FLOW_TIME_THRESHOLD, g_duration_time);
-
-    if (mAlarm_state)
-    {
-      sim800.phoneCall(g_phone_number);
-      delay(PHONE_CALL_DELAY);
-      g_msg_content = WARNING_MSG;
-      sim800.sendSMS(g_msg_content, g_phone_number);
-    }
+    // call next-state function
+    nextStateFunction();
   }
+  break;
 
-  // setup credential
-  else if (g_opt_mode == 1)
+  /* Get phone number */
+  case 2:
   {
+    // blink the LED Indicator
+    ledIndicator.turnOn();
+    // get Phone number
+    //g_phone_number = "2020"; // TESTING ONLY
+     g_phone_number = sim800.getPhone(); // usual code
+     Serial.println(g_phone_number.length());
+    
+
+    // call next-state function
+    nextStateFunction();
+  }
+  break;
+
+  case 3:
+  { // STORING and SEND Notify sms
+    ledIndicator.turnOff();
+    // writeStringToEEPROM(20, g_phone_number);
+    String msgs_verif = "Nomor Anda telah teregistrasi...";
+    sim800.sendSMS(msgs_verif, g_phone_number);
+
+    nextStateFunction();
+  }
+  break;
+
+  case 4:
+  { // SET ALARM water
+    blinkLedIndicator(800);
+    g_alarm_water_threshold = 1;
+    // g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // Have to testing !!!!
+
+    nextStateFunction();
+  }
+  break;
+
+  case 5:
+  {
+
+    writeStringToEEPROM(40, String(g_alarm_water_threshold));
+    ledIndicator.turnOff();
+
+    nextStateFunction();
+  }
+  break; // end here for operation mode 1.
+
+  default:
+    break;
   }
 }
 
 /* Functions */
 
+// next-state function
+// It controls the state of main.
+void nextStateFunction(void)
+{
+  switch (g_state)
+  {
+  case 1:        // setup credential
+    g_state = 2; // move to get phone number
+    break;
+
+  case 2: // get phone number
+    if (g_phone_number.length() > 0)
+      g_state = 3; // move to store phone number in EEPROM
+    else
+      g_state = 2; // if it doesn't get phone number, stay in this state.
+    break;
+
+  case 3:
+    g_state = 4;
+    break;
+
+  case 4:
+    if (g_alarm_water_threshold == 0)
+      g_state = 4; // Water ALARM
+    else
+      g_state = 5; // ALARM THRESHOLD to eeprom
+    break;
+
+  case 5:
+    g_state = 6; // begining of operation mode 0
+    break;
+
+  default:
+    break;
+  }
+}
 /* periodic tasks */
 // It gets water volume and water flow. its store in g_total_volume and mWater_flow(private)
 // it gets time duration and store it in g_duration_time
@@ -131,6 +210,27 @@ void periodicTasks(void)
       DPRINTLN(F("-------------------------------------------\n"));
 
       g_duration_time = 0; // reset duration time
+    }
+  }
+}
+
+// Blinking LED Indicator
+void blinkLedIndicator(uint16_t mLed_interval)
+{
+  g_current_time = millis();
+
+  if (g_current_time - g_prevTime >= mLed_interval)
+  {
+    g_prevTime = g_current_time;
+    if (mLed_state == 1)
+    {
+      ledIndicator.turnOff();
+      mLed_state = 0;
+    }
+    else
+    {
+      ledIndicator.turnOn();
+      mLed_state = 1;
     }
   }
 }

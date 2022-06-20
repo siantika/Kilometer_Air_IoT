@@ -6,7 +6,7 @@
 // IO_Mapping file --> containing Pins definition
 
 /* LED INDICATOR */
-#define PIN_LED_INDICATOR 4
+#define PIN_LED_INDICATOR 4 // FOR TESTING. Usual pin is pin 4.
 
 /* BUTTON OPERATION */
 #define PIN_BUTTON_OPT 3
@@ -28,7 +28,6 @@
 #define ID_DEVICE "KMA-01" // ID
 #define ADDR_PHONE 0 // epprom address to store PHONE NUMBER (interger)
 #define TIME_TO_REPORT 15 // hour (am)
-#define TIME_LIMIT_DISCHARGE 180 // sec
 #define PHONE_CALL_DELAY 20000 // sec
 #define FLOW_TIME_THRESHOLD 6 // sec
 #define WARNING_MSG "AIR TERUS MENGALIR! PERIKSA JALUR AIR!!!"
