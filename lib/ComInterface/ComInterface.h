@@ -6,6 +6,8 @@
 
 #define BAUDRATE_SIM800 9600 //bps
 
+#define MAX_PHONE_NUMB 15 
+
 class ComInterface {
      private:
         String mPhone_number;

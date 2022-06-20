@@ -92,13 +92,10 @@ void loop(void)
   /* Get phone number */
   case 2:
   {
-    // blink the LED Indicator
+    // turn on the  LED Indicator
     ledIndicator.turnOn();
     // get Phone number
-    //g_phone_number = "2020"; // TESTING ONLY
      g_phone_number = sim800.getPhone(); // usual code
-     Serial.println(g_phone_number.length());
-    
 
     // call next-state function
     nextStateFunction();
@@ -154,10 +151,11 @@ void nextStateFunction(void)
     break;
 
   case 2: // get phone number
-    if (g_phone_number.length() > 0)
+    if (g_phone_number.length() > 0 && g_phone_number != "ERROR")
       g_state = 3; // move to store phone number in EEPROM
     else
       g_state = 2; // if it doesn't get phone number, stay in this state.
+
     break;
 
   case 3:

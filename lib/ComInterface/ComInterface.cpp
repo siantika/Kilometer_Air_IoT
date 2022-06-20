@@ -11,7 +11,7 @@
 
 // Enable or disable debug message (#define DEBUG)
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
@@ -32,7 +32,8 @@ ComInterface::ComInterface()
 String ComInterface::getPhone()
 {
   mPhone_number = readSMS();
-  return mPhone_number;
+  if ( mPhone_number == "ERROR") return "ERROR";
+  else return mPhone_number;
 }
 
 /* Sending a Message */
@@ -105,6 +106,14 @@ String ComInterface::readSMS()
         {
           mParse_data += mData_in[i];
           i++;
+
+          // Hot fixing test_id 007
+          if(mParse_data.length()> MAX_PHONE_NUMB){
+            return "ERROR";
+            break;
+
+          } 
+          
         }
       }
     }
