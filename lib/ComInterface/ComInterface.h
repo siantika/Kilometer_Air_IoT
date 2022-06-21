@@ -6,7 +6,7 @@
 
 #define BAUDRATE_SIM800 9600 //bps
 
-#define MAX_PHONE_NUMB 15 
+#define MAX_SMS_CHAR 15 
 
 class ComInterface {
      private:
@@ -24,6 +24,7 @@ class ComInterface {
         String mParse_data ;
         bool sendSMS(String &messages, String &phoneNum);
         bool checkSimSerial();
+        void init(void);
         void sleepSIM800(byte sleep_mode);
         void replySerial(void);
         void phoneCall(String &phoneNum);

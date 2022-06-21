@@ -11,7 +11,7 @@
 
 // Enable or disable debug message (#define DEBUG)
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
@@ -29,11 +29,30 @@ ComInterface::ComInterface()
   sim800Serial.begin(BAUDRATE_SIM800);
 }
 
+void ComInterface::init()
+{
+  // setup for sms
+  sim800Serial.println("AT");
+  DEBUG_PRINT
+  SIM_NORMAL_OPT_DELAY
+  sim800Serial.println("AT+CMGF=1");
+  DEBUG_PRINT
+  SIM_NORMAL_OPT_DELAY
+  sim800Serial.println("AT+CNMI=1,2,0,0,0");
+  DEBUG_PRINT
+  SIM_NORMAL_OPT_DELAY
+  sim800Serial.println();
+  DEBUG_PRINT
+  SIM_NORMAL_OPT_DELAY
+}
+
 String ComInterface::getPhone()
 {
   mPhone_number = readSMS();
-  if ( mPhone_number == "ERROR") return "ERROR";
-  else return mPhone_number;
+  if (mPhone_number == "ERROR")
+    return "ERROR";
+  else
+    return mPhone_number;
 }
 
 /* Sending a Message */
@@ -44,9 +63,6 @@ String ComInterface::getPhone()
 bool ComInterface::sendSMS(String &messages, String &phoneNum)
 {
   sim800Serial.println("AT");
-  DEBUG_PRINT
-  SIM_NORMAL_OPT_DELAY
-  sim800Serial.println("AT+CMGF=1");
   DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
   sim800Serial.println("AT+CMGS=\"+" + phoneNum + "\"");
@@ -63,29 +79,16 @@ bool ComInterface::sendSMS(String &messages, String &phoneNum)
 /* !!! Read SMS format : #conten of messages* (#......*) !!!*/
 String ComInterface::readSMS()
 {
-  sim800Serial.println("AT");
-  DEBUG_PRINT
-  SIM_NORMAL_OPT_DELAY
-  sim800Serial.println("AT+CMGF=1");
-  DEBUG_PRINT
-  SIM_NORMAL_OPT_DELAY
-  sim800Serial.println("AT+CNMI=1,2,0,0,0");
-  DEBUG_PRINT
-  SIM_NORMAL_OPT_DELAY
-  sim800Serial.println();
-  DEBUG_PRINT
-  SIM_NORMAL_OPT_DELAY
-  serialFlush();
-
   // waiting if there is no data incoming from sim800
-  while (sim800Serial.available() == 0);
-  // clear String (fisrt time when code is called)
+  // while (sim800Serial.available() == 0)
+  //   ;
 
+  // clear String (fisrt time when code is called)
   mData_in = "";
   mParse_data = "";
 
   // read data from SIM800 uart (while exist)
-  while (sim800Serial.available())
+  while (sim800Serial.available()>0)
   {
     delay(10);
     char inChar = (char)sim800Serial.read();
@@ -108,12 +111,11 @@ String ComInterface::readSMS()
           i++;
 
           // Hot fixing test_id 007
-          if(mParse_data.length()> MAX_PHONE_NUMB){
+          if (mParse_data.length() > MAX_SMS_CHAR)
+          {
             return "ERROR";
             break;
-
-          } 
-          
+          }
         }
       }
     }

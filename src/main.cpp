@@ -22,7 +22,7 @@ bool g_sms_flag;
 uint8_t g_duration_time;
 uint8_t g_state;
 bool mLed_state;
-int g_alarm_water_threshold = 0;
+uint16_t g_alarm_water_threshold = 0; // hot fix test id 014
 float g_total_volume;
 const float CALLIBRATION_KWA = 48E-5; // Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 String g_phone_number;
@@ -50,6 +50,7 @@ void setup(void)
 {
   Serial.begin(9600);
   EEPROM.begin();
+  sim800.init();
   sim800.sleepSIM800(2); // Sleep mode 2 (src: https://simcom.ee/documents/SIM800/SIM800_Hardware%20Design_V1.09.pdf)
   waterFlow.init();
 
@@ -69,6 +70,12 @@ void setup(void)
 // MAIN FUNCTION
 void loop(void)
 {
+
+  // read string eeprom TESTING UNIT
+  // String readPhone = readStringFromEEPROM(ADDR_PHONE);
+  // Serial.println(readPhone);
+  // delay(800);
+
   // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
   uint8_t g_state_prev = g_state;
   Serial.println(g_state_prev);
@@ -80,12 +87,12 @@ void loop(void)
   case 1:
   {
     // This is initial operation 1 case.
-    ledIndicator.turnOn();
     mLed_state = 1; // ON = 1 . OFF = 0
     g_prevTime = 0;
 
     // call next-state function
-    nextStateFunction();
+    // nextStateFunction();
+    g_state = 4; // TESTING MODE
   }
   break;
 
@@ -93,9 +100,9 @@ void loop(void)
   case 2:
   {
     // turn on the  LED Indicator
-    ledIndicator.turnOn();
+    blinkLedIndicator(500);
     // get Phone number
-     g_phone_number = sim800.getPhone(); // usual code
+    g_phone_number = sim800.getPhone(); // usual code
 
     // call next-state function
     nextStateFunction();
@@ -105,8 +112,8 @@ void loop(void)
   case 3:
   { // STORING and SEND Notify sms
     ledIndicator.turnOff();
-    // writeStringToEEPROM(20, g_phone_number);
-    String msgs_verif = "Nomor Anda telah teregistrasi...";
+    writeStringToEEPROM(ADDR_PHONE, g_phone_number);
+    String msgs_verif = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks 64.000 detik)";
     sim800.sendSMS(msgs_verif, g_phone_number);
 
     nextStateFunction();
@@ -116,17 +123,30 @@ void loop(void)
   case 4:
   { // SET ALARM water
     blinkLedIndicator(800);
-    g_alarm_water_threshold = 1;
-    // g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // Have to testing !!!!
+    g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // Have to testing !!!!
+    Serial.print("Alarm time: ");
+    Serial.println(g_alarm_water_threshold);
 
-    nextStateFunction();
+    // exceed maks value range (hot fix test id 14 and 16)
+    if (g_alarm_water_threshold > 65535) g_state = 4;
+
+
+    if (g_alarm_water_threshold != 0)
+    {
+      Serial.print("Alarm time: ");
+      Serial.println(g_alarm_water_threshold);
+      delay(2000);
+      exit(1);
+    }
+
+   // nextStateFunction();
   }
   break;
 
   case 5:
   {
 
-    writeStringToEEPROM(40, String(g_alarm_water_threshold));
+    // writeStringToEEPROM(40, String(g_alarm_water_threshold));
     ledIndicator.turnOff();
 
     nextStateFunction();
@@ -237,11 +257,11 @@ void blinkLedIndicator(uint16_t mLed_interval)
 void writeStringToEEPROM(int addrOffset, const String &strToWrite)
 {
   byte mLen = strToWrite.length();
-  EEPROM.write(addrOffset, mLen);
+  EEPROM.update(addrOffset, mLen);
 
   for (byte i = 0; i < mLen; i++)
   {
-    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
+    EEPROM.update(addrOffset + 1 + i, strToWrite[i]);
   }
 }
 

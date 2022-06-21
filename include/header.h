@@ -34,5 +34,6 @@
 #define WATER_READ_INTERVAL 1000 // sec
 #define ADC_RESOLUTION 1024.0
 #define V_REF_5V 5.0
+#define ADDR_PHONE 0
 
 #endif
