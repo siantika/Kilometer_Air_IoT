@@ -35,5 +35,6 @@
 #define ADC_RESOLUTION 1024.0
 #define V_REF_5V 5.0
 #define ADDR_PHONE 0
+#define ADDR_ALARM_DURATION 20 
 
 #endif

@@ -56,6 +56,7 @@ void setup(void)
 
   // initial value
   g_opt_mode = 0;
+
   g_phone_number = "";
   g_prevTime = 0;
   g_duration_time = 0;
@@ -71,87 +72,75 @@ void setup(void)
 void loop(void)
 {
 
-  // read string eeprom TESTING UNIT
-  // String readPhone = readStringFromEEPROM(ADDR_PHONE);
-  // Serial.println(readPhone);
-  // delay(800);
-
   // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
   uint8_t g_state_prev = g_state;
   Serial.println(g_state_prev);
 
   switch (g_state)
   {
-
   // Operation mode 1. Setup a credential.
+
+  /* Initial */
   case 1:
   {
     // This is initial operation 1 case.
     mLed_state = 1; // ON = 1 . OFF = 0
     g_prevTime = 0;
 
-    // call next-state function
-    // nextStateFunction();
-    g_state = 4; // TESTING MODE
+    nextStateFunction();
   }
   break;
 
   /* Get phone number */
   case 2:
   {
-    // turn on the  LED Indicator
-    blinkLedIndicator(500);
-    // get Phone number
-    g_phone_number = sim800.getPhone(); // usual code
+    blinkLedIndicator(500);             // blink the  LED Indicator
+    g_phone_number = sim800.getPhone(); // get Phone number
 
-    // call next-state function
     nextStateFunction();
   }
   break;
 
+    /* Store and Notify SMS */
   case 3:
-  { // STORING and SEND Notify sms
+  {
     ledIndicator.turnOff();
     writeStringToEEPROM(ADDR_PHONE, g_phone_number);
-    String msgs_verif = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks 64.000 detik)";
+    String msgs_verif = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks 64000 detik)";
     sim800.sendSMS(msgs_verif, g_phone_number);
 
     nextStateFunction();
   }
   break;
 
+    /* set and get water alarm duration  */
   case 4:
-  { // SET ALARM water
+  {
     blinkLedIndicator(800);
-    g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // Have to testing !!!!
-    Serial.print("Alarm time: ");
-    Serial.println(g_alarm_water_threshold);
+    g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // casting from String to interger
 
-    // exceed maks value range (hot fix test id 14 and 16)
-    if (g_alarm_water_threshold > 65535) g_state = 4;
-
-
-    if (g_alarm_water_threshold != 0)
-    {
-      Serial.print("Alarm time: ");
-      Serial.println(g_alarm_water_threshold);
-      delay(2000);
-      exit(1);
-    }
-
-   // nextStateFunction();
+    nextStateFunction();
   }
   break;
 
+    /* Store and Notify Alarm Duration */
   case 5:
   {
-
-    // writeStringToEEPROM(40, String(g_alarm_water_threshold));
+    writeStringToEEPROM(ADDR_ALARM_DURATION, String(g_alarm_water_threshold));
     ledIndicator.turnOff();
+    String msg_duration_alarm_verify = "Alarm diatur di " + String(g_alarm_water_threshold) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !";
+    sim800.sendSMS(msg_duration_alarm_verify, g_phone_number);
 
     nextStateFunction();
   }
   break; // end here for operation mode 1.
+
+  case 6:
+  {
+    // idle
+    // device should be restarted and move the operation switch to mode 0 !
+  }
+  break;
 
   default:
     break;
@@ -166,31 +155,45 @@ void nextStateFunction(void)
 {
   switch (g_state)
   {
-  case 1:        // setup credential
+  /* setup credential */
+  case 1:
+  {
     g_state = 2; // move to get phone number
     break;
+  }
 
-  case 2: // get phone number
+ /* get a phone number */ 
+  case 2: 
+  {
     if (g_phone_number.length() > 0 && g_phone_number != "ERROR")
-      g_state = 3; // move to store phone number in EEPROM
+      g_state = 3; // move to Store and Notify SMS
     else
-      g_state = 2; // if it doesn't get phone number, stay in this state.
-
+      g_state = 2; // stay in this state.
+  }
     break;
 
+ /* Store and Notify SMS */
   case 3:
-    g_state = 4;
+  {
+    g_state = 4; // move to set and get water alarm duration
+  }
     break;
 
+/* set and get water alarm duration */
   case 4:
+  {
     if (g_alarm_water_threshold == 0)
-      g_state = 4; // Water ALARM
+      g_state = 4; // stay in this state
     else
-      g_state = 5; // ALARM THRESHOLD to eeprom
+      g_state = 5; // move to Store and Notify Alarm Duration
+  }
     break;
 
+/* Store and Notify Alarm Duration */
   case 5:
-    g_state = 6; // begining of operation mode 0
+  {
+    g_state = 6; // Idle
+  }
     break;
 
   default:
