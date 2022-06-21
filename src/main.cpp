@@ -6,7 +6,7 @@
 #include "IndicatorInterface.h"
 
 // Debug console
-//#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
 #ifdef DEBUG                                      // Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
@@ -22,6 +22,7 @@ bool g_sms_flag;
 uint8_t g_duration_time;
 uint8_t g_state;
 bool mLed_state;
+bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
 uint16_t g_alarm_water_threshold = 0; // hot fix test id 014
 float g_total_volume;
 const float CALLIBRATION_KWA = 48E-5; // Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
@@ -56,94 +57,138 @@ void setup(void)
 
   // initial value
   g_opt_mode = 0;
-
   g_phone_number = "";
   g_prevTime = 0;
   g_duration_time = 0;
   g_total_volume += CALLIBRATION_KWA; // add callibration const
-  g_state = 1;                        // default g_state = 0.
+  g_state = 0;                        // default g_state ???
 
-  // load value
+  /* prerequisite check */
+  // It checks the availability (phone and alarm duration) in eeprom.
+  // If no value stored in eeprom, It will blink LED inidcator 200 ms and waiting until mode opt switchs to 1 (setup credential)
+
   // phone number
-  // last of water volume
+  if (readStringFromEEPROM(ADDR_PHONE) != 0 && readStringFromEEPROM(ADDR_ALARM_DURATION) != 0)
+  {
+    g_phone_number = readStringFromEEPROM(ADDR_PHONE);
+    g_flag_phone_num_to_run = 1;
+    DPRINTLN("Phone number available");
+  }
+  else
+  {
+    g_flag_phone_num_to_run = 0;
+    DPRINTLN("No phone number");
+  }
+
+  // Alarm time duration
+  if (readStringFromEEPROM(ADDR_ALARM_DURATION) != 0)
+  {
+    g_duration_time = atoi(readStringFromEEPROM(ADDR_ALARM_DURATION).c_str());
+    g_flag_alarm_duration_to_run = 1;
+    DPRINTLN("Alarm duration available");
+  }
+  else
+  {
+    g_flag_alarm_duration_to_run = 0;
+    DPRINTLN("No alarm duration");
+  }
+
+  // permit to run main code
+  if (g_flag_alarm_duration_to_run * g_flag_phone_num_to_run == 1)
+  {
+    // PASS TO MAIN LOOP
+  }
+  else
+  {
+    while (g_opt_mode != 1)
+      blinkLedIndicator(200);
+  }
 }
 
 // MAIN FUNCTION
 void loop(void)
 {
-
-  // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
-  uint8_t g_state_prev = g_state;
-  Serial.println(g_state_prev);
-
-  switch (g_state)
+  if (g_opt_mode == 0)
   {
-  // Operation mode 1. Setup a credential.
-
-  /* Initial */
-  case 1:
-  {
-    // This is initial operation 1 case.
-    mLed_state = 1; // ON = 1 . OFF = 0
-    g_prevTime = 0;
-
-    nextStateFunction();
+    DPRINTLN("reading water volume");
+    delay(800);
   }
-  break;
 
-  /* Get phone number */
-  case 2:
+  else if (g_opt_mode == 1)
   {
-    blinkLedIndicator(500);             // blink the  LED Indicator
-    g_phone_number = sim800.getPhone(); // get Phone number
+    // set operationMode --> using interrupt button, it changes g_opt_mode (should be volatile)
+    uint8_t g_state_prev = g_state;
+    Serial.println(g_state_prev);
 
-    nextStateFunction();
-  }
-  break;
+    switch (g_state)
+    {
+    // Operation mode 1. Setup a credential.
 
-    /* Store and Notify SMS */
-  case 3:
-  {
-    ledIndicator.turnOff();
-    writeStringToEEPROM(ADDR_PHONE, g_phone_number);
-    String msgs_verif = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks 64000 detik)";
-    sim800.sendSMS(msgs_verif, g_phone_number);
+    /* Initial */
+    case 1:
+    {
+      // This is initial operation 1 case.
+      mLed_state = 1; // ON = 1 . OFF = 0
+      g_prevTime = 0;
 
-    nextStateFunction();
-  }
-  break;
-
-    /* set and get water alarm duration  */
-  case 4:
-  {
-    blinkLedIndicator(800);
-    g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // casting from String to interger
-
-    nextStateFunction();
-  }
-  break;
-
-    /* Store and Notify Alarm Duration */
-  case 5:
-  {
-    writeStringToEEPROM(ADDR_ALARM_DURATION, String(g_alarm_water_threshold));
-    ledIndicator.turnOff();
-    String msg_duration_alarm_verify = "Alarm diatur di " + String(g_alarm_water_threshold) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !";
-    sim800.sendSMS(msg_duration_alarm_verify, g_phone_number);
-
-    nextStateFunction();
-  }
-  break; // end here for operation mode 1.
-
-  case 6:
-  {
-    // idle
-    // device should be restarted and move the operation switch to mode 0 !
-  }
-  break;
-
-  default:
+      nextStateFunction();
+    }
     break;
+
+    /* Get phone number */
+    case 2:
+    {
+      blinkLedIndicator(500);             // blink the  LED Indicator
+      g_phone_number = sim800.getPhone(); // get Phone number
+
+      nextStateFunction();
+    }
+    break;
+
+      /* Store and Notify SMS */
+    case 3:
+    {
+      ledIndicator.turnOff();
+      writeStringToEEPROM(ADDR_PHONE, g_phone_number);
+      String msgs_verif = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks. 64000 detik)";
+      sim800.sendSMS(msgs_verif, g_phone_number);
+
+      nextStateFunction();
+    }
+    break;
+
+      /* set and get water alarm duration  */
+    case 4:
+    {
+      blinkLedIndicator(800);
+      g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); // casting from String to interger
+
+      nextStateFunction();
+    }
+    break;
+
+      /* Store and Notify Alarm Duration */
+    case 5:
+    {
+      writeStringToEEPROM(ADDR_ALARM_DURATION, String(g_alarm_water_threshold));
+      ledIndicator.turnOff();
+      String msg_duration_alarm_verify = "Alarm diatur di " + String(g_alarm_water_threshold) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !";
+      sim800.sendSMS(msg_duration_alarm_verify, g_phone_number);
+
+      nextStateFunction();
+    }
+    break; // end here for operation mode 1.
+
+    case 6:
+    {
+      // idle
+      // device should be restarted and move the operation switch to mode 0 !
+    }
+    break;
+
+    default:
+      break;
+    }
   }
 }
 
@@ -162,24 +207,24 @@ void nextStateFunction(void)
     break;
   }
 
- /* get a phone number */ 
-  case 2: 
+    /* get a phone number */
+  case 2:
   {
     if (g_phone_number.length() > 0 && g_phone_number != "ERROR")
       g_state = 3; // move to Store and Notify SMS
     else
       g_state = 2; // stay in this state.
   }
-    break;
+  break;
 
- /* Store and Notify SMS */
+    /* Store and Notify SMS */
   case 3:
   {
     g_state = 4; // move to set and get water alarm duration
   }
-    break;
+  break;
 
-/* set and get water alarm duration */
+    /* set and get water alarm duration */
   case 4:
   {
     if (g_alarm_water_threshold == 0)
@@ -187,14 +232,14 @@ void nextStateFunction(void)
     else
       g_state = 5; // move to Store and Notify Alarm Duration
   }
-    break;
+  break;
 
-/* Store and Notify Alarm Duration */
+    /* Store and Notify Alarm Duration */
   case 5:
   {
     g_state = 6; // Idle
   }
-    break;
+  break;
 
   default:
     break;
