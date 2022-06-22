@@ -20,7 +20,7 @@ class WaterFlow : SensorInterface
 
 private:
     // variables
-    const float CUBIC_CONST = 1.66667E-5; // it produces water flow's value in m3/sec
+    const float CUBIC_CONST = 1515E-6; // it produces water flow's value in m3/sec
     // Methods
     static void sCountPulse();
 

@@ -25,14 +25,18 @@ bool mLed_state;
 bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
 uint16_t g_alarm_water_threshold = 0; // hot fix test id 014
 float g_total_volume;
-const float CALLIBRATION_KWA = 48E-5; // Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 String g_phone_number;
 String g_msg_content;
 unsigned long g_current_time;
 unsigned long g_prevTime;
+unsigned long g_current_time_call;
+unsigned long g_prev_time_call;
+
 
 // Constants
 const String MSG_NOTIFY_REG = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks. 64000 detik)";
+const float CALLIBRATION_KWA = 0.48; // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
+const uint16_t CALL_TIME_INTERVAL = 20000 ; // secs. Should be 20 secs
 
 /* Creating instances */
 ComInterface sim800;
@@ -45,7 +49,7 @@ IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator(PIN_LED_INDICATOR);
 String readStringFromEEPROM(int addrOffset);
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec);
-void periodicTasks(void);
+void readWaterVolume(void);
 void blinkLedIndicator(uint16_t mLed_interval);
 void nextStateFunction(void);
 void permitToMainCode(void);
@@ -53,14 +57,16 @@ void initState(void);
 void getPhoneNumber(void);
 void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char msg_type);
 void setAndGetWaterAlarmDuration(void);
+void nextStateFunction_opt0(void);
+void callUserInPeriodicTime(void);
 
 // Setup
 void setup(void)
 {
   Serial.begin(9600);
-  EEPROM.begin();
+  EEPROM.begin(); // need to check
   sim800.init();
-  sim800.sleepSIM800(SIM800_SLEEP_MODE); 
+  sim800.sleepSIM800(SIM800_SLEEP_MODE);
   waterFlow.init();
 
   /* initial value */
@@ -75,6 +81,9 @@ void setup(void)
   // It checks the availability (phone and alarm duration) in eeprom.
   // If no value stored in eeprom, It will blink LED inidcator 200 ms and waiting until mode opt switches to 1 (setup credential)
   permitToMainCode();
+
+  // debug
+  g_alarm_water_threshold = 5;
 }
 
 // MAIN FUNCTION
@@ -82,8 +91,34 @@ void loop(void)
 {
   if (g_opt_mode == 0)
   {
-    DPRINTLN("reading water volume");
-    delay(800);
+   // Serial.println(g_state);
+
+    switch (g_state)
+    {
+    case 1:
+    {
+      readWaterVolume();
+      nextStateFunction_opt0();
+    }
+    break;
+
+    case 2:
+    {
+      callUserInPeriodicTime();
+      nextStateFunction_opt0();
+    }
+    break;
+
+    case 3:
+    {
+      Serial.println(F("Checking incoming SMS"));
+      nextStateFunction_opt0();
+    }
+    break;
+
+    default:
+      break;
+    }
   }
 
   else if (g_opt_mode == 1)
@@ -92,7 +127,7 @@ void loop(void)
       + @param (String) g_phone_g_phone_number, (uint16_t) g_alarm_water_threshold .
       + input parameter using sms from user through sim800.serial() in comInterface lib.
     */
-    //Serial.println(g_state); // Debug
+    // Serial.println(g_state); // Debug
 
     switch (g_state)
     {
@@ -162,7 +197,8 @@ void permitToMainCode(void)
   {
     g_phone_number = readStringFromEEPROM(ADDR_PHONE);
     g_flag_phone_num_to_run = 1;
-    DPRINTLN("Phone number available");
+    DPRINT("Phone number is: ");
+    DPRINTLN(g_phone_number);
   }
   else
   {
@@ -173,9 +209,10 @@ void permitToMainCode(void)
   // Alarm time duration
   if (readStringFromEEPROM(ADDR_ALARM_DURATION) != 0)
   {
-    g_duration_time = atoi(readStringFromEEPROM(ADDR_ALARM_DURATION).c_str());
+    g_alarm_water_threshold = atoi(readStringFromEEPROM(ADDR_ALARM_DURATION).c_str());
     g_flag_alarm_duration_to_run = 1;
-    DPRINTLN("Alarm duration available");
+    DPRINT("Alarm duration is: ");
+    DPRINTLN(g_alarm_water_threshold);
   }
   else
   {
@@ -189,6 +226,41 @@ void permitToMainCode(void)
 
     while (g_opt_mode != 1)
       blinkLedIndicator(200);
+  }
+}
+
+// state function for operation 0
+void nextStateFunction_opt0(void)
+{
+  switch (g_state)
+  {
+  case 1:
+  {
+    if (g_duration_time >= g_alarm_water_threshold)
+    {
+      g_state = 2; // Alarm ON: call user
+    }
+    else
+      {
+        g_state = 3; // check incoming sms
+      }
+  }
+  break;
+
+  case 2:
+  {
+    g_state = 1; // reading the water volume and time duration
+  }
+  break;
+
+  case 3:
+  {
+    g_state = 1; // reading water and time duration
+  }
+  break;
+
+  default:
+    break;
   }
 }
 
@@ -278,21 +350,19 @@ void nextStateFunction(void)
 /* periodic tasks */
 // It gets water volume and water flow. its store in g_total_volume and mWater_flow(private)
 // it gets time duration and store it in g_duration_time
-void periodicTasks(void)
+void readWaterVolume(void)
 {
   g_current_time = millis();
 
   if (g_current_time - g_prevTime >= WATER_READ_INTERVAL)
   {
     g_prevTime = g_current_time;
-
     float mWater_flow = waterFlow.getWaterVolume();
-
     g_total_volume += mWater_flow;
 
-    DPRINT(F("Total water volume (m3): "));
+    DPRINT(F("Total water volume (l): "));
     DPRINTLN(g_total_volume);
-    DPRINT(F("Water flow (m3/s): "));
+    DPRINT(F("Water flow (l/s): "));
     DPRINTLN(mWater_flow);
 
     // get time duration when water is flowing
@@ -307,6 +377,19 @@ void periodicTasks(void)
 
       g_duration_time = 0; // reset duration time
     }
+  }
+}
+
+// calling user in periodic time
+void callUserInPeriodicTime(void){
+  g_current_time_call = millis();
+  if (g_current_time_call - g_prev_time_call >= CALL_TIME_INTERVAL)
+  {
+    DPRINTLN(g_current_time_call - g_prev_time_call);
+    g_prev_time_call = g_current_time_call;
+    // making call
+    sim800.phoneCall(g_phone_number);
+    DPRINTLN(F("Calling User..."));
   }
 }
 
