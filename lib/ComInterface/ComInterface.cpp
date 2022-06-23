@@ -8,6 +8,7 @@
 
 #include "ComInterface.h"
 #include "header.h"
+#include "io_mapping.h"
 
 // Enable or disable debug message (#define DEBUG)
 

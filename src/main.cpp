@@ -4,9 +4,10 @@
 #include "SensorInterface.h"
 #include "header.h"
 #include "IndicatorInterface.h"
+#include "io_mapping.h"
 
 // Debug console
-//#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
 #ifdef DEBUG                                      // Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
@@ -86,7 +87,7 @@ void setup(void)
 // MAIN FUNCTION
 void loop(void)
 {
-
+ 
   if (g_opt_mode == 0)
   {
     // Serial.println(g_state);
