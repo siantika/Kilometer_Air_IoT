@@ -78,7 +78,7 @@ float BatteryLevel::getVoltage()
 
     mAnalog_data = BatteryLevel::readAnalogData(); // 
 
-    mVoltage_in = mAnalog_data / ADC_RESOLUTION * V_REF_5V;
+    mVoltage_in = mAnalog_data / ADC_RESOLUTION * V_REF;
     mVoltage_read = mVoltage_in / (mR2 / (mR1 + mR2)); // converting to volt
 
     return mVoltage_read;
