@@ -14,7 +14,7 @@
 // For INPUT MODE
 IndicatorInterface<TypeEnum::__INPUT>::IndicatorInterface(uint8_t sensor_pin){
    mSensor_pin = sensor_pin;
-   pinMode(sensor_pin, INPUT);
+   pinMode(sensor_pin, INPUT_PULLUP);
 }
 
 bool IndicatorInterface<TypeEnum::__INPUT>::getInputDigital(void){

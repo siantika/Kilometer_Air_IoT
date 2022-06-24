@@ -8,7 +8,7 @@
 #define PIN_LED_INDICATOR 4 // FOR TESTING. Usual pin is pin 4.
 
 /* BUTTON OPERATION */
-#define PIN_BUTTON_OPT 3
+#define PIN_BUTTON_OPT 5
 
 /* SIM800 */
 #define SIM_RX 10

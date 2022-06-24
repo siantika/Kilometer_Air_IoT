@@ -43,7 +43,7 @@ const uint16_t CALL_TIME_INTERVAL = 20000; // secs. Should be 20 secs (Max respo
 ComInterface sim800;
 WaterFlow waterFlow(PIN_WATER_FLOW);
 BatteryLevel batteryLevel(PIN_BATTERY_LEVEL);
-IndicatorInterface<TypeEnum::__INPUT> buttonOpt(PIN_BUTTON_OPT); // fixing ... !!!!!!!!!!!!!!!!!!!
+IndicatorInterface<TypeEnum::__INPUT> buttonOpt(PIN_BUTTON_OPT); 
 IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator(PIN_LED_INDICATOR);
 
 /* forward functions declaration */
@@ -62,6 +62,7 @@ void nextStateFunction_opt0(void);
 void callUserInPeriodicTime(void);
 void getComandFromSms(void);
 void handlingCommandFromSms(void);
+void checkingOperationMode(void);
 
 // Setup
 void setup(void)
@@ -80,6 +81,8 @@ void setup(void)
   g_total_volume += CALLIBRATION_KWA; // add callibration const
   g_state = 1;                        // make it jump to case 1 (default)
 
+  g_opt_mode = buttonOpt.getInputDigital();
+
   /* prerequisite check */
   permitToMainCode();
 }
@@ -87,7 +90,7 @@ void setup(void)
 // MAIN FUNCTION
 void loop(void)
 {
- 
+  
   if (g_opt_mode == 0)
   {
     // Serial.println(g_state);
@@ -332,7 +335,7 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
 void setAndGetWaterAlarmDuration(void)
 {
   blinkLedIndicator(800);
-  g_alarm_water_threshold = atoi(sim800.readSMS().c_str());
+  g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); 
 }
 
 /* State function for operation 0 */
@@ -455,6 +458,8 @@ void blinkLedIndicator(uint16_t mLed_interval)
     }
   }
 }
+
+
 
 // EEPROM. src: https://roboticsbackend.com/arduino-write-string-in-eeprom/
 void writeStringToEEPROM(int addrOffset, const String &strToWrite)
