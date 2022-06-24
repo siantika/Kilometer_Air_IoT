@@ -12,7 +12,7 @@
 
 // Enable or disable debug message (#define DEBUG)
 
-// #define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
@@ -61,7 +61,7 @@ String ComInterface::getPhone()
 // @param &phoneNum --> conraining phone number. start with nation code (ex: 62 (IDN))
 // please get the phone number first!!!
 
-bool ComInterface::sendSMS(String &messages, String &phoneNum)
+void ComInterface::sendSMS(String &messages, String &phoneNum)
 {
   sim800Serial.println("AT");
   DEBUG_PRINT
@@ -89,7 +89,7 @@ String ComInterface::readSMS()
   mParse_data = "";
 
   // read data from SIM800 uart (while exist)
-  while (sim800Serial.available()>0)
+  while (sim800Serial.available() > 0)
   {
     delay(10);
     char inChar = (char)sim800Serial.read();
@@ -145,8 +145,8 @@ void ComInterface::hangUpcall()
 }
 
 /* Sleep Mode Function  */
-// it only work for SIM800
-// Recomended setting: SLEEP_MODE: 0 or 2 (I'll using sleep mode 2 since sleep mode 0 is default mode)
+// it only work for SIM 800 and SIM 900
+// Recomended setting: SLEEP_MODE: 0 or 2 (I'll use sleep mode 2 since sleep mode 0 is default mode)
 // Not recomended: SLEEP_MODE 1 needs put an extra circuit (pin DTR) ref: https://simcom.ee/documents/SIM800/SIM800_Hardware%20Design_V1.09.pdf (p.26-27)
 void ComInterface::sleepSIM800(byte SLEEP_MODE)
 {
@@ -154,10 +154,8 @@ void ComInterface::sleepSIM800(byte SLEEP_MODE)
   DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
   sim800Serial.println("AT+CSCLK=" + String(SLEEP_MODE));
-  delay(500); // give it time for serial response
-  DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
-  delay(5000);
+  DEBUG_PRINT
   serialFlush(); // clear sim800 reply about setting (first time initialization). WARNING: Don't remove This !!!
 }
 
@@ -189,7 +187,7 @@ void ComInterface::serialFlush()
 {
   while (Serial.available() > 0)
   {
-    char _t = Serial.read();
+    char _t = Serial.read(); 
   }
   while (sim800Serial.available() > 0)
   {
