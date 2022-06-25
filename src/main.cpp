@@ -18,7 +18,7 @@
 #endif
 
 /* Global Variables */
-volatile bool g_opt_mode;
+bool g_opt_mode;
 uint8_t g_duration_time;
 uint8_t g_state;
 bool mLed_state;
@@ -27,7 +27,7 @@ uint16_t g_alarm_water_threshold;
 float g_total_volume;
 float g_battery_level;
 String g_phone_number;
-String g_msg_content;
+String g_msg_content; // refactoring
 String g_get_command_sms;
 unsigned long g_current_time;
 unsigned long g_prevTime;
@@ -41,10 +41,10 @@ const uint16_t CALL_TIME_INTERVAL = 20000; // secs. Should be 20 secs (Max respo
 
 /* Creating instances */
 ComInterface sim800;
-WaterFlow waterFlow(PIN_WATER_FLOW);
-BatteryLevel batteryLevel(PIN_BATTERY_LEVEL);
-IndicatorInterface<TypeEnum::__INPUT> buttonOpt(PIN_BUTTON_OPT); 
-IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator(PIN_LED_INDICATOR);
+WaterFlow waterFlow {PIN_WATER_FLOW}; // should be fixed
+Battery battery(PIN_BATTERY);
+IndicatorInterface<TypeEnum::__INPUT> buttonOpt{PIN_BUTTON_OPT};
+IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator{PIN_LED_INDICATOR};
 
 /* forward functions declaration */
 String readStringFromEEPROM(int addrOffset);
@@ -73,27 +73,29 @@ void setup(void)
   waterFlow.init();
 
   /* initial value */
-  g_opt_mode = 0; // debug
+
   g_phone_number = "";
   g_alarm_water_threshold = 0;
   g_prevTime = 0;
   g_duration_time = 0;
-  g_total_volume += CALLIBRATION_KWA; // add callibration const
-  g_state = 1;                        // make it jump to case 1 (default)
+  g_total_volume += CALLIBRATION_KWA; // add callibration's constant
+  g_state = 1;                        // make it jumps to case 1 (default)
 
+  /* detect operation mode */
   g_opt_mode = buttonOpt.getInputDigital();
 
   /* prerequisite check */
   permitToMainCode();
+
+
 }
 
-// MAIN FUNCTION
+// Driver code
 void loop(void)
 {
-  
+ 
   if (g_opt_mode == 0)
   {
-    // Serial.println(g_state);
 
     switch (g_state)
     {
@@ -206,13 +208,13 @@ void permitToMainCode(void)
   {
     g_phone_number = readStringFromEEPROM(ADDR_PHONE);
     g_flag_phone_num_to_run = 1;
-    DPRINT("Phone number is: ");
+    DPRINT(F("Phone number is: "));
     DPRINTLN(g_phone_number);
   }
   else
   {
     g_flag_phone_num_to_run = 0;
-    DPRINTLN("No phone number");
+    DPRINTLN(F("No phone number"));
   }
 
   // stored alarm time duration
@@ -220,13 +222,13 @@ void permitToMainCode(void)
   {
     g_alarm_water_threshold = atoi(readStringFromEEPROM(ADDR_ALARM_DURATION).c_str());
     g_flag_alarm_duration_to_run = 1;
-    DPRINT("Alarm duration is: ");
+    DPRINT(F("Alarm duration is: "));
     DPRINTLN(g_alarm_water_threshold);
   }
   else
   {
     g_flag_alarm_duration_to_run = 0;
-    DPRINTLN("No alarm duration");
+    DPRINTLN(F("No alarm duration"));
   }
 
   // permit to run main code
@@ -295,13 +297,13 @@ void getComandFromSms(void)
 void handlingCommandFromSms(void)
 {
 
-  g_battery_level = batteryLevel.getVoltage();
-  DPRINT("battery voltage is ");
+  g_battery_level = battery.getVoltage();
+  DPRINT(F("battery voltage is "));
   DPRINTLN(g_battery_level);
 
-  DPRINT("Water volume is ");
+  DPRINT(F("Water volume is "));
   DPRINT(g_total_volume);
-  DPRINTLN(" Liters");
+  DPRINTLN(F(" Liters"));
 
   g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai " + String(g_battery_level) + " V. \n 2. Volume air terpakai " + String(g_total_volume) + " L.";
   sim800.sendSMS(g_msg_content, g_phone_number);
@@ -335,7 +337,7 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
 void setAndGetWaterAlarmDuration(void)
 {
   blinkLedIndicator(800);
-  g_alarm_water_threshold = atoi(sim800.readSMS().c_str()); 
+  g_alarm_water_threshold = atoi(sim800.readSMS().c_str());
 }
 
 /* State function for operation 0 */
@@ -458,8 +460,6 @@ void blinkLedIndicator(uint16_t mLed_interval)
     }
   }
 }
-
-
 
 // EEPROM. src: https://roboticsbackend.com/arduino-write-string-in-eeprom/
 void writeStringToEEPROM(int addrOffset, const String &strToWrite)

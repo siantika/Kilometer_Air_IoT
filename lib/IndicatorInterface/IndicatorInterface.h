@@ -25,7 +25,7 @@ class IndicatorInterface <TypeEnum::__INPUT> {
     private:
         uint8_t mSensor_pin;
     public:
-        IndicatorInterface(uint8_t sensor_pin);
+        explicit IndicatorInterface(uint8_t sensor_pin);
         bool getInputDigital(void);
 };
 template<>
@@ -35,7 +35,7 @@ class IndicatorInterface <TypeEnum :: __OUTPUT> {
      private:
         uint8_t mSensor_pin;
     public: 
-        IndicatorInterface(uint8_t sensor_pin);
+        explicit IndicatorInterface(uint8_t sensor_pin);
         bool turnOn (void);
         bool turnOff (void);
 };

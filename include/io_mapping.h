@@ -5,7 +5,7 @@
 // IO_Mapping --> containing Pins definition
 
 /* LED INDICATOR */
-#define PIN_LED_INDICATOR 4 // FOR TESTING. Usual pin is pin 4.
+#define PIN_LED_INDICATOR 4 
 
 /* BUTTON OPERATION */
 #define PIN_BUTTON_OPT 5
@@ -18,7 +18,7 @@
 #define PIN_WATER_FLOW 2 // interrupt number 0
 
 /* Battery Level Sensor's pin */
-#define PIN_BATTERY_LEVEL A0
+#define PIN_BATTERY A0
 
 
 #endif

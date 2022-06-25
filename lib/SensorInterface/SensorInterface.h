@@ -26,7 +26,8 @@ private:
 
 public:
     // Methods
-    WaterFlow(uint8_t sensor_pin);
+    // block another data type
+    explicit WaterFlow(uint8_t sensor_pin);
     float getWaterFlow();
     void init();
     bool setVolumeAlarm(uint16_t time_threshold, uint16_t on_going_time);
@@ -34,14 +35,14 @@ public:
 };
 
 // Derived Class
-class BatteryLevel : SensorInterface
+class Battery : SensorInterface
 {
 private:
     uint16_t mAnalog_data;
     uint16_t readAnalogData();
 
 public:
-    BatteryLevel(uint8_t sensor_pin);
+    explicit Battery(uint8_t sensor_pin);
     float getVoltage();
 };
 
