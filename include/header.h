@@ -18,5 +18,9 @@
 #define ADDR_PHONE 0 // EEPROM address for phone number
 #define ADDR_ALARM_DURATION 20  // EEPROM address for alarm duration
 #define SIM800_SLEEP_MODE 2 // src: https://simcom.ee/documents/SIM800/SIM800_Hardware%20Design_V1.09.pdf
-
+#define MAX_CALL_TIME_INTERVAL 20000 // 20 secs is interval from sim800's datasheet
+#define FIRST_CALL_TIME_DURATION 0 // just making call in first time, no need to wait the millis function.
+#define LED_INTERVAL_200 200 // ms
+#define LED_INTERVAL_GET_PHONE 800 // ms
+#define LED_INTERVAL_SET_ALARM 500 // ms
 #endif

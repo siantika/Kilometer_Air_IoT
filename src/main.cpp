@@ -21,14 +21,16 @@
 bool g_opt_mode;
 uint8_t g_duration_time;
 uint8_t g_state;
+bool g_call_status;
 bool mLed_state;
 bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
 uint16_t g_alarm_water_threshold;
+uint16_t g_call_time_interval;
 float g_total_volume;
 float g_battery_level;
 float g_water_flow;
 String g_phone_number;
-String g_msg_content; // refactoring
+String g_msg_content;
 String g_get_command_sms;
 unsigned long g_current_time_read_water;
 unsigned long g_prev_time_read_water;
@@ -40,7 +42,7 @@ unsigned long g_current_time_led;
 // Constants
 const String MSG_NOTIFY_REG = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks. 64000 detik)";
 const float CALLIBRATION_KWA = 0.48;       // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
-const uint16_t CALL_TIME_INTERVAL = 1000; // secs. Should be 20 secs (Max response form sim800)
+
 
 /* Creating instances */
 ComInterface sim800;
@@ -66,6 +68,7 @@ void callUserInPeriodicTime(void);
 void getComandFromSms(void);
 void handlingCommandFromSms(void);
 void checkingOperationMode(void);
+void hangUpCall(void);
 
 // Setup
 void setup(void)
@@ -79,12 +82,13 @@ void setup(void)
   /* initial value */
 
   g_phone_number = "";
+  g_call_status = 0; // no call happened first time
   g_alarm_water_threshold = 0;
   g_prev_time_read_water = 0;
   g_duration_time = 0;
   g_total_volume += CALLIBRATION_KWA; // add callibration's constant
   g_state = 1;                        // make it jumps to case 1 (default)
-
+ g_call_time_interval = FIRST_CALL_TIME_DURATION; // set it to 0 for fisrt time. Hot fix
   /* detect operation mode */
   g_opt_mode = buttonOpt.getInputDigital();
 
@@ -97,7 +101,7 @@ void loop(void)
 {
 
   
-  Serial.println(g_state);
+  // Serial.println(g_state);
   // Serial.print(" time duration ");
   // Serial.println(g_duration_time);
   // Serial.print(" water flow ");
@@ -116,7 +120,6 @@ void loop(void)
 
     case 1:
     {
-      // blink the led indicator
       readWaterVolumeAndWaterflowDuration();
       nextStateFunction_opt0();
     }
@@ -124,7 +127,7 @@ void loop(void)
 
     case 2:
     {
-      blinkLedIndicator(200);
+      blinkLedIndicator(LED_INTERVAL_200);
       callUserInPeriodicTime();
       nextStateFunction_opt0();
     }
@@ -144,6 +147,11 @@ void loop(void)
       nextStateFunction_opt0();
     }
     break;
+    case 5:
+    {
+      hangUpCall();
+      nextStateFunction_opt0();
+    }
 
     default:
       break;
@@ -249,7 +257,7 @@ void permitToMainCode(void)
   {
 
     while (g_opt_mode != 1)
-      blinkLedIndicator(200);
+      blinkLedIndicator(LED_INTERVAL_200);
   }
 }
 
@@ -293,9 +301,10 @@ void callUserInPeriodicTime(void)
 {
   
   g_current_time_call = millis();
-  if (g_current_time_call - g_prev_time_call >= CALL_TIME_INTERVAL)
+  if (g_current_time_call - g_prev_time_call >= g_call_time_interval)
   {
-    Serial.println(g_current_time_call - g_prev_time_call);
+    g_call_status = 1 ; // it is happening for calling 
+    g_call_time_interval = MAX_CALL_TIME_INTERVAL;
     g_prev_time_call = g_current_time_call;
     sim800.phoneCall(g_phone_number);
     DPRINTLN(F("Calling User..."));
@@ -305,6 +314,7 @@ void callUserInPeriodicTime(void)
 
 void getComandFromSms(void)
 {
+  g_call_time_interval = FIRST_CALL_TIME_DURATION;
   g_get_command_sms = sim800.readSMS();
   g_get_command_sms.toLowerCase();
 }
@@ -324,6 +334,12 @@ void handlingCommandFromSms(void)
   sim800.sendSMS(g_msg_content, g_phone_number);
 }
 
+void hangUpCall(void)
+{
+  sim800.hangUpcall();
+  g_call_status = 0; // reset it
+}
+
 // Operation mode 1
 void initState(void)
 {
@@ -333,7 +349,7 @@ void initState(void)
 
 void getPhoneNumber(void)
 {
-  blinkLedIndicator(500);
+  blinkLedIndicator(LED_INTERVAL_GET_PHONE);
   g_phone_number = sim800.getPhone();
 }
 
@@ -351,7 +367,7 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
 
 void setAndGetWaterAlarmDuration(void)
 {
-  blinkLedIndicator(800);
+  blinkLedIndicator(LED_INTERVAL_SET_ALARM);
   g_alarm_water_threshold = atoi(sim800.readSMS().c_str());
 }
 
@@ -367,7 +383,11 @@ void nextStateFunction_opt0(void)
     {
       g_state = 2; // move to callUserInPeriodicTime
     }
-    else
+    else if (g_duration_time == 0 && g_call_status == 1)
+    {
+      g_state = 5; // Hang up the call
+    }
+    else if (g_duration_time == 0 && g_call_status == 0)
     {
       g_state = 3; // move to getComandFromSms
     }
@@ -393,6 +413,11 @@ void nextStateFunction_opt0(void)
   }
   break;
   case 4:
+  {
+    g_state = 1; // move to readWaterVolumeAndWaterflowDuration.
+  }
+  break;
+  case 5:
   {
     g_state = 1; // move to readWaterVolumeAndWaterflowDuration.
   }
