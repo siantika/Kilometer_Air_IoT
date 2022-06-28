@@ -12,7 +12,7 @@
 
 // Enable or disable debug message (#define DEBUG)
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino

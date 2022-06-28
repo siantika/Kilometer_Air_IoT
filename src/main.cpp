@@ -7,7 +7,7 @@
 #include "io_mapping.h"
 
 // Debug console
-#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+//#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
 #ifdef DEBUG                                      // Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
@@ -330,7 +330,7 @@ void handlingCommandFromSms(void)
   DPRINT(g_total_volume);
   DPRINTLN(F(" Liters"));
 
-  g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai " + String(g_battery_level) + " V. \n 2. Volume air terpakai " + String(g_total_volume) + " L.";
+  g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai " + String(g_battery_level) + " V. \n 2. Volume air terpakai " + String(g_total_volume) + " L.\n 3. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
   sim800.sendSMS(g_msg_content, g_phone_number);
 }
 
