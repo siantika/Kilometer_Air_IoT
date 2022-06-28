@@ -12,7 +12,7 @@
 
 // Enable or disable debug message (#define DEBUG)
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
@@ -80,10 +80,6 @@ void ComInterface::sendSMS(String &messages, String &phoneNum)
 /* !!! Read SMS format : #conten of messages* (#......*) !!!*/
 String ComInterface::readSMS()
 {
-  // waiting if there is no data incoming from sim800
-  // while (sim800Serial.available() == 0)
-  //   ;
-
   // clear String (fisrt time when code is called)
   mData_in = "";
   mParse_data = "";
@@ -159,19 +155,9 @@ void ComInterface::sleepSIM800(byte SLEEP_MODE)
   serialFlush(); // clear sim800 reply about setting (first time initialization). WARNING: Don't remove This !!!
 }
 
-// check SIM800 serial
-bool ComInterface::checkSimSerial()
-{
-  if (sim800Serial.available() > 0)
-    return 1;
-  else
-    return 0;
-}
-
 /* Private method */
 void ComInterface::replySerial()
 {
-
   while (Serial.available())
   {
     sim800Serial.write(Serial.read()); // Forward what Serial received to Software Serial Port
@@ -187,7 +173,7 @@ void ComInterface::serialFlush()
 {
   while (Serial.available() > 0)
   {
-    char _t = Serial.read(); 
+    char _t = Serial.read();
   }
   while (sim800Serial.available() > 0)
   {

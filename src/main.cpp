@@ -26,22 +26,25 @@ bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
 uint16_t g_alarm_water_threshold;
 float g_total_volume;
 float g_battery_level;
+float g_water_flow;
 String g_phone_number;
 String g_msg_content; // refactoring
 String g_get_command_sms;
-unsigned long g_current_time;
-unsigned long g_prevTime;
+unsigned long g_current_time_read_water;
+unsigned long g_prev_time_read_water;
 unsigned long g_current_time_call;
 unsigned long g_prev_time_call;
+unsigned long g_prev_time_led;
+unsigned long g_current_time_led;
 
 // Constants
 const String MSG_NOTIFY_REG = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks. 64000 detik)";
 const float CALLIBRATION_KWA = 0.48;       // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
-const uint16_t CALL_TIME_INTERVAL = 20000; // secs. Should be 20 secs (Max response form sim800)
+const uint16_t CALL_TIME_INTERVAL = 1000; // secs. Should be 20 secs (Max response form sim800)
 
 /* Creating instances */
 ComInterface sim800;
-WaterFlow waterFlow {PIN_WATER_FLOW}; // should be fixed
+WaterFlow waterFlow{PIN_WATER_FLOW}; // should be fixed
 Battery battery(PIN_BATTERY);
 IndicatorInterface<TypeEnum::__INPUT> buttonOpt{PIN_BUTTON_OPT};
 IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator{PIN_LED_INDICATOR};
@@ -67,6 +70,7 @@ void checkingOperationMode(void);
 // Setup
 void setup(void)
 {
+  delay(2000); // let SIM800 does initialisation
   Serial.begin(9600);
   sim800.init();
   sim800.sleepSIM800(SIM800_SLEEP_MODE);
@@ -76,7 +80,7 @@ void setup(void)
 
   g_phone_number = "";
   g_alarm_water_threshold = 0;
-  g_prevTime = 0;
+  g_prev_time_read_water = 0;
   g_duration_time = 0;
   g_total_volume += CALLIBRATION_KWA; // add callibration's constant
   g_state = 1;                        // make it jumps to case 1 (default)
@@ -86,14 +90,20 @@ void setup(void)
 
   /* prerequisite check */
   permitToMainCode();
-
-
 }
 
 // Driver code
 void loop(void)
 {
- 
+
+  
+  Serial.println(g_state);
+  // Serial.print(" time duration ");
+  // Serial.println(g_duration_time);
+  // Serial.print(" water flow ");
+  // Serial.println(g_water_flow);
+
+
   if (g_opt_mode == 0)
   {
 
@@ -106,6 +116,7 @@ void loop(void)
 
     case 1:
     {
+      // blink the led indicator
       readWaterVolumeAndWaterflowDuration();
       nextStateFunction_opt0();
     }
@@ -113,6 +124,7 @@ void loop(void)
 
     case 2:
     {
+      blinkLedIndicator(200);
       callUserInPeriodicTime();
       nextStateFunction_opt0();
     }
@@ -120,6 +132,7 @@ void loop(void)
 
     case 3:
     {
+      ledIndicator.turnOff(); // hot added
       getComandFromSms();
       nextStateFunction_opt0();
     }
@@ -245,24 +258,24 @@ void permitToMainCode(void)
 
 void readWaterVolumeAndWaterflowDuration(void)
 {
-  // It gets water volume and water flow. its store in g_total_volume and mWater_flow(private)
+  // It gets water volume and water flow. its store in g_total_volume and g_water_flow(private)
   // it gets time duration and store it in g_duration_time
 
-  g_current_time = millis();
+  g_current_time_read_water = millis();
 
-  if (g_current_time - g_prevTime >= WATER_READ_INTERVAL)
+  if (g_current_time_read_water - g_prev_time_read_water >= WATER_READ_INTERVAL)
   {
-    g_prevTime = g_current_time;
-    float mWater_flow = waterFlow.getWaterVolume();
-    g_total_volume += mWater_flow;
+    g_prev_time_read_water = g_current_time_read_water;
+    g_water_flow = waterFlow.getWaterVolume();
+    g_total_volume += g_water_flow;
 
     DPRINT(F("Total water volume (l): "));
     DPRINTLN(g_total_volume);
     DPRINT(F("Water flow (l/s): "));
-    DPRINTLN(mWater_flow);
+    DPRINTLN(g_water_flow);
 
     // get time duration when water is flowing
-    if (mWater_flow > 0.00)
+    if (g_water_flow > 0.00)
       g_duration_time++;
     else
     {
@@ -278,13 +291,15 @@ void readWaterVolumeAndWaterflowDuration(void)
 
 void callUserInPeriodicTime(void)
 {
+  
   g_current_time_call = millis();
   if (g_current_time_call - g_prev_time_call >= CALL_TIME_INTERVAL)
   {
-    DPRINTLN(g_current_time_call - g_prev_time_call);
+    Serial.println(g_current_time_call - g_prev_time_call);
     g_prev_time_call = g_current_time_call;
     sim800.phoneCall(g_phone_number);
     DPRINTLN(F("Calling User..."));
+
   }
 }
 
@@ -313,12 +328,12 @@ void handlingCommandFromSms(void)
 void initState(void)
 {
   mLed_state = 1; // ON = 1 . OFF = 0
-  g_prevTime = 0;
+  g_prev_time_read_water = 0;
 }
 
 void getPhoneNumber(void)
 {
-  blinkLedIndicator(800);
+  blinkLedIndicator(500);
   g_phone_number = sim800.getPhone();
 }
 
@@ -443,11 +458,11 @@ void nextStateFunction_opt1(void)
 // Blinking LED Indicator
 void blinkLedIndicator(uint16_t mLed_interval)
 {
-  g_current_time = millis();
+  g_current_time_led = millis();
 
-  if (g_current_time - g_prevTime >= mLed_interval)
+  if (g_current_time_led - g_prev_time_led >= mLed_interval)
   {
-    g_prevTime = g_current_time;
+    g_prev_time_led = g_current_time_led;
     if (mLed_state == 1)
     {
       ledIndicator.turnOff();
