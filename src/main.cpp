@@ -1,3 +1,12 @@
+/***************************************************************************
+ * Created by: I Putu Pawesi Siantika. email: csiantka@gmail.com. Jun 2022 *
+ * Kilometer Air IoT Version 1.0 (BETA)                                    *
+ * Monitoring water volume and alarming when leakage ocuured               *
+ * This is Private Code.                                                   *
+ * Thankyou ...                                                            *
+ ***************************************************************************
+ */
+
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "ComInterface.h"
@@ -18,9 +27,11 @@
 #endif
 
 /* Global Variables */
-bool g_opt_mode;
+
 uint8_t g_duration_time;
 uint8_t g_state;
+bool g_opt_mode;
+bool g_serial_is_read;
 bool g_call_status;
 bool mLed_state;
 bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
@@ -41,8 +52,7 @@ unsigned long g_current_time_led;
 
 // Constants
 const String MSG_NOTIFY_REG = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks. 64000 detik)";
-const float CALLIBRATION_KWA = 0.48;       // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
-
+const float CALLIBRATION_KWA = 0.48; // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 
 /* Creating instances */
 ComInterface sim800;
@@ -69,6 +79,7 @@ void getComandFromSms(void);
 void handlingCommandFromSms(void);
 void checkingOperationMode(void);
 void hangUpCall(void);
+void showFirmwareVersion(void);
 
 // Setup
 void setup(void)
@@ -81,14 +92,15 @@ void setup(void)
 
   /* initial value */
 
+  g_serial_is_read = 0;
   g_phone_number = "";
   g_call_status = 0; // no call happened first time
   g_alarm_water_threshold = 0;
   g_prev_time_read_water = 0;
   g_duration_time = 0;
-  g_total_volume += CALLIBRATION_KWA; // add callibration's constant
-  g_state = 1;                        // make it jumps to case 1 (default)
- g_call_time_interval = FIRST_CALL_TIME_DURATION; // set it to 0 for fisrt time. Hot fix
+  g_total_volume += CALLIBRATION_KWA;              // add callibration's constant
+  g_state = 1;                                     // make it jumps to case 1 (default)
+  g_call_time_interval = FIRST_CALL_TIME_DURATION; // set it to 0 for fisrt time. Hot fix
   /* detect operation mode */
   g_opt_mode = buttonOpt.getInputDigital();
 
@@ -99,15 +111,8 @@ void setup(void)
 // Driver code
 void loop(void)
 {
-
-  
-  // Serial.println(g_state);
-  // Serial.print(" time duration ");
-  // Serial.println(g_duration_time);
-  // Serial.print(" water flow ");
-  // Serial.println(g_water_flow);
-
-
+  // show software version when serial available > 0
+  showFirmwareVersion();
   if (g_opt_mode == 0)
   {
 
@@ -299,16 +304,15 @@ void readWaterVolumeAndWaterflowDuration(void)
 
 void callUserInPeriodicTime(void)
 {
-  
+
   g_current_time_call = millis();
   if (g_current_time_call - g_prev_time_call >= g_call_time_interval)
   {
-    g_call_status = 1 ; // it is happening for calling 
+    g_call_status = 1; // it is happening for calling
     g_call_time_interval = MAX_CALL_TIME_INTERVAL;
     g_prev_time_call = g_current_time_call;
     sim800.phoneCall(g_phone_number);
     DPRINTLN(F("Calling User..."));
-
   }
 }
 
@@ -498,6 +502,24 @@ void blinkLedIndicator(uint16_t mLed_interval)
       ledIndicator.turnOn();
       mLed_state = 1;
     }
+  }
+}
+
+void showFirmwareVersion(void)
+{
+  if (Serial && g_serial_is_read == 0)
+  {
+    Serial.println(F(" * ------------------- Kilometer Air ------------------ * "));
+    Serial.println(" Firmware Version: " + String(FIRMWARE_VERSION));
+    Serial.println(" ID Device       : " + String(ID_DEVICE));
+    Serial.println(" Corporation     : " + String(CORPORATION));
+    Serial.println(F(" * ----------------------- *** ----------------------- * "));
+    Serial.flush();
+    g_serial_is_read = 1;
+  }
+  if (!Serial)
+  {
+    g_serial_is_read = 0;
   }
 }
 

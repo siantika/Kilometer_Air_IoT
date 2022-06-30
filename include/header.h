@@ -10,8 +10,8 @@
 
 // CONSTANTS
 #define ID_DEVICE "KMA-01"
-#define PROGRAM_VERSION "1.0 BETA / 2022"
-#define CORPORATION "VIMANA ELECTRONIC"
+#define FIRMWARE_VERSION "1.0 BETA, Copyrights 2022"
+#define CORPORATION "VIMANA ELECTRONIC, Siantika"
 #define WATER_READ_INTERVAL 1000 // sec
 #define ADC_RESOLUTION 1024.0 // 10-byte --> refered to board.
 #define V_REF 3.3 // 3.3 V --> refered to board.
