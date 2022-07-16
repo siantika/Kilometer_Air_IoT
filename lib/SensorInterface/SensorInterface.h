@@ -7,7 +7,7 @@
 class SensorInterface
 {
 protected:
-    uint8_t sensor_pin;
+    uint8_t mSensor_pin;
 
 public:
     SensorInterface();
@@ -27,7 +27,7 @@ private:
 public:
     // Methods
     // block another data type
-    explicit WaterFlow(uint8_t sensor_pin);
+    explicit WaterFlow(uint8_t mSensor_pin);
     float getWaterFlow();
     void init();
     bool setVolumeAlarm(uint16_t time_threshold, uint16_t on_going_time);
@@ -42,7 +42,7 @@ private:
     uint16_t readAnalogData();
 
 public:
-    explicit Battery(uint8_t sensor_pin);
+    explicit Battery(uint8_t mSensor_pin);
     float getVoltage();
 };
 

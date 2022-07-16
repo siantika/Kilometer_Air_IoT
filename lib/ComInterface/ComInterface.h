@@ -14,16 +14,14 @@ private:
   String mPhone_number;
   String mMsg;
   String mContent_of_msg;
-  String parseData();
+  String mData_in;
+  String mParse_data;
   void serialFlush();
 
 public:
   ComInterface();
   String readSMS();
   String getPhone();
-  String mData_in;
-  String mParse_data;
-  bool checkSimSerial();
   void sendSMS(String &messages, String &phoneNum);
   void init(void);
   void sleepSIM800(byte sleep_mode);

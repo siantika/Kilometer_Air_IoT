@@ -1,8 +1,10 @@
+
+
 #include "SensorInterface.h"
 
 SensorInterface ::SensorInterface()
 {
-    //pass
+    // pass
 }
 
 // Derived Class
@@ -18,23 +20,23 @@ float WaterFlow::getWaterFlow()
     return mQ;
 }
 
- void WaterFlow::sCountPulse()
+void WaterFlow::sCountPulse()
 {
     sWater_pulse++;
 }
 /* Private Methods ends here */
 
 // Public Methods start here
- WaterFlow::WaterFlow(uint8_t sensor_pin)
+WaterFlow::WaterFlow(uint8_t mSensor_pin)
 {
-    this->sensor_pin = sensor_pin; 
+    this->mSensor_pin = mSensor_pin;
     sWater_pulse = 0;
 }
 
 void WaterFlow::init()
 {
-    pinMode(sensor_pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(sensor_pin), WaterFlow::sCountPulse, RISING);
+    pinMode(mSensor_pin, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(mSensor_pin), WaterFlow::sCountPulse, RISING);
 }
 
 float WaterFlow::getWaterVolume()
@@ -55,28 +57,28 @@ bool WaterFlow::setVolumeAlarm(uint16_t time_threshold, uint16_t on_going_time)
 
 /* *********** Battery Level Class *********** */
 // Constructor
-Battery::Battery(uint8_t sensor_pin)
+Battery::Battery(uint8_t mSensor_pin)
 {
-    sensor_pin = sensor_pin;
+    this->mSensor_pin = mSensor_pin;
 }
 
 // private methods
 uint16_t Battery::readAnalogData()
 {
-    return mAnalog_data = analogRead(sensor_pin);
+    return mAnalog_data = analogRead(mSensor_pin); // changeeee
 }
 
 // public methods
 float Battery::getVoltage()
 {
     // src: https://www.electronicshub.org/interfacing-voltage-sensor-with-arduino/#Code
-    //Resistors value
+    // Resistors value
     float mVoltage_in; // input voltage from sensor
     float mVoltage_read;
-    const float mR1 = 18800.0; // ohm (MAKE SURE THE VALUE OF THE RESISTANCE IS PRECISE!!!)
-    const float mR2 = 4760.0;  // ohm
+    const float mR1 = 19500.0; // ohm (MAKE SURE THE VALUE OF THE RESISTOR IS PRECISE!!!)
+    const float mR2 = 4564.0;  // ohm
 
-    mAnalog_data = Battery::readAnalogData(); // 
+    mAnalog_data = Battery::readAnalogData(); //
 
     mVoltage_in = mAnalog_data / ADC_RESOLUTION * V_REF;
     mVoltage_read = mVoltage_in / (mR2 / (mR1 + mR2)); // converting to volt

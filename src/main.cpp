@@ -1,7 +1,7 @@
 /***************************************************************************
  * Created by: I Putu Pawesi Siantika. email: csiantka@gmail.com. Jun 2022 *
  * Kilometer Air IoT Version 1.0 (BETA)                                    *
- * Monitoring water volume and alarming when leakage ocuured               *
+ * Monitoring water volume and alarming when leakage ocurred               *
  * This is Private Code.                                                   *
  * Thankyou ...                                                            *
  ***************************************************************************
@@ -27,7 +27,6 @@
 #endif
 
 /* Global Variables */
-
 uint8_t g_duration_time;
 uint8_t g_state;
 bool g_opt_mode;
@@ -50,15 +49,15 @@ unsigned long g_prev_time_call;
 unsigned long g_prev_time_led;
 unsigned long g_current_time_led;
 
-// Constants
+/* Constants */
 const String MSG_NOTIFY_REG = "Nomor Anda telah teregistrasi. Silakan atur waktu alarm (dalam detik, Maks. 64000 detik)";
 const float CALLIBRATION_KWA = 0.48; // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 
 /* Creating instances */
 ComInterface sim800;
-WaterFlow waterFlow{PIN_WATER_FLOW}; // should be fixed
-Battery battery(PIN_BATTERY);
-IndicatorInterface<TypeEnum::__INPUT> buttonOpt{PIN_BUTTON_OPT};
+WaterFlow waterFlow{PIN_WATER_FLOW};
+Battery battery{PIN_BATTERY};
+IndicatorInterface<TypeEnum::__INPUT> buttonOpt{PIN_BUTTON_OPT}; // using curly bracket because it prevents constructor casting parameter (if you use (), it does casting)
 IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator{PIN_LED_INDICATOR};
 
 /* forward functions declaration */
@@ -81,26 +80,27 @@ void checkingOperationMode(void);
 void hangUpCall(void);
 void showFirmwareVersion(void);
 
-// Setup
+/* Setup */
 void setup(void)
 {
-  delay(2000); // let SIM800 does initialisation
+
+  delay(3000); // Minimum is 3 secs (Initialization for SIM800L. Check Datasheet: https://www.filipeflop.com/img/files/download/Datasheet_SIM800L.pdf / p.24)
   Serial.begin(9600);
   sim800.init();
   sim800.sleepSIM800(SIM800_SLEEP_MODE);
   waterFlow.init();
 
   /* initial value */
-
   g_serial_is_read = 0;
   g_phone_number = "";
-  g_call_status = 0; // no call happened first time
+  g_call_status = 0;
   g_alarm_water_threshold = 0;
   g_prev_time_read_water = 0;
   g_duration_time = 0;
-  g_total_volume += CALLIBRATION_KWA;              // add callibration's constant
-  g_state = 1;                                     // make it jumps to case 1 (default)
-  g_call_time_interval = FIRST_CALL_TIME_DURATION; // set it to 0 for fisrt time. Hot fix
+  g_total_volume += CALLIBRATION_KWA;
+  g_state = 1; // make it jumps to case 1 (default)
+  g_call_time_interval = FIRST_CALL_TIME_DURATION;
+  
   /* detect operation mode */
   g_opt_mode = buttonOpt.getInputDigital();
 
@@ -111,7 +111,7 @@ void setup(void)
 // Driver code
 void loop(void)
 {
-  // show software version when serial available > 0
+  // show software version when serial available (once)
   showFirmwareVersion();
   if (g_opt_mode == 0)
   {
@@ -140,7 +140,7 @@ void loop(void)
 
     case 3:
     {
-      ledIndicator.turnOff(); // hot added
+      ledIndicator.turnOff();
       getComandFromSms();
       nextStateFunction_opt0();
     }
@@ -169,8 +169,6 @@ void loop(void)
       + @param (String) g_phone_g_phone_number, (uint16_t) g_alarm_water_threshold .
       + input parameter using sms from user through sim800.serial() in comInterface lib.
     */
-
-    // Serial.println(g_state); // Debug
     switch (g_state)
     {
 
@@ -325,7 +323,7 @@ void getComandFromSms(void)
 
 void handlingCommandFromSms(void)
 {
-
+  ledIndicator.turnOn();
   g_battery_level = battery.getVoltage();
   DPRINT(F("battery voltage is "));
   DPRINTLN(g_battery_level);
@@ -336,6 +334,7 @@ void handlingCommandFromSms(void)
 
   g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai " + String(g_battery_level) + " V. \n 2. Volume air terpakai " + String(g_total_volume) + " L.\n 3. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
   sim800.sendSMS(g_msg_content, g_phone_number);
+  ledIndicator.turnOff();
 }
 
 void hangUpCall(void)
@@ -362,10 +361,10 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
   String mMsg_content = "";
   ledIndicator.turnOff();
   writeStringToEEPROM(eeprom_address, data_to_write_in_eeprom);
-  if (msg_type == 'P') // phone message notify
+  if (msg_type == 'P') // Phone message notify
     mMsg_content = MSG_NOTIFY_REG;
-  else if (msg_type == 'A') // alarm message notify
-    mMsg_content = "Alarm diatur di " + String(data_to_write_in_eeprom) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !";
+  else if (msg_type == 'A')                                                                                                                          // Alarm message notify                                                                                                                        // alarm message notify
+    mMsg_content = "Alarm diatur di " + String(data_to_write_in_eeprom) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !"; // HERE is a content of message sent to user
   sim800.sendSMS(mMsg_content, g_phone_number);
 }
 
@@ -514,6 +513,10 @@ void showFirmwareVersion(void)
     Serial.println(" ID Device       : " + String(ID_DEVICE));
     Serial.println(" Corporation     : " + String(CORPORATION));
     Serial.println(F(" * ----------------------- *** ----------------------- * "));
+    Serial.println(F(" Device info: "));
+    Serial.println(" * Battery Level         : " + String(battery.getVoltage()) + " Volt");
+    Serial.println(" * Water volume used     : " + String(g_total_volume) + " Liters");
+    Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
     Serial.flush();
     g_serial_is_read = 1;
   }

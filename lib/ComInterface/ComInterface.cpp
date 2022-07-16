@@ -1,6 +1,6 @@
 /* *********************************************************** */
-/* SIM800_COM class                                            */
-/* It handles SIM800 operations                                */
+/* ComInterface class                                          */
+/* It handles Communication based on SIMCOM tech (AT COMMANDS) */
 /* Created by: I Putu Pawesi Siantika, S.T.                    */
 /* Do not forget to increase The buffer memory to 256 bytes    */
 /* Src: https://internetofhomethings.com/homethings/?p=927     */
@@ -11,7 +11,6 @@
 #include "io_mapping.h"
 
 // Enable or disable debug message (#define DEBUG)
-
 //#define DEBUG
 
 #ifdef DEBUG
@@ -32,7 +31,7 @@ ComInterface::ComInterface()
 
 void ComInterface::init()
 {
-  // setup for sms
+  // setup for SMS
   sim800Serial.println("AT");
   DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
@@ -107,7 +106,6 @@ String ComInterface::readSMS()
           mParse_data += mData_in[i];
           i++;
 
-          // Hot fixing test_id 007
           if (mParse_data.length() > MAX_SMS_CHAR)
           {
             return "ERROR";
