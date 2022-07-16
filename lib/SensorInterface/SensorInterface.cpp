@@ -69,7 +69,7 @@ uint16_t Battery::readAnalogData()
 }
 
 // public methods
-float Battery::getVoltage()
+float Battery::getVoltage(float mVrefPin)
 {
     // src: https://www.electronicshub.org/interfacing-voltage-sensor-with-arduino/#Code
     // Resistors value
@@ -80,7 +80,7 @@ float Battery::getVoltage()
 
     mAnalog_data = Battery::readAnalogData(); //
 
-    mVoltage_in = mAnalog_data / ADC_RESOLUTION * V_REF;
+    mVoltage_in = mAnalog_data / ADC_RESOLUTION * mVrefPin;
     mVoltage_read = mVoltage_in / (mR2 / (mR1 + mR2)); // converting to volt
 
     return mVoltage_read;

@@ -31,7 +31,7 @@ public:
     float getWaterFlow();
     void init();
     bool setVolumeAlarm(uint16_t time_threshold, uint16_t on_going_time);
-    float getWaterVolume(void);
+    float getWaterVolume();
 };
 
 // Derived Class
@@ -43,7 +43,7 @@ private:
 
 public:
     explicit Battery(uint8_t mSensor_pin);
-    float getVoltage();
+    float getVoltage(float mVrefPin);
 };
 
 #endif

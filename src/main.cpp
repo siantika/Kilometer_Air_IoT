@@ -16,7 +16,7 @@
 #include "io_mapping.h"
 
 // Debug console
-//#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
 #ifdef DEBUG                                      // Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
@@ -100,7 +100,7 @@ void setup(void)
   g_total_volume += CALLIBRATION_KWA;
   g_state = 1; // make it jumps to case 1 (default)
   g_call_time_interval = FIRST_CALL_TIME_DURATION;
-  
+
   /* detect operation mode */
   g_opt_mode = buttonOpt.getInputDigital();
 
@@ -324,7 +324,7 @@ void getComandFromSms(void)
 void handlingCommandFromSms(void)
 {
   ledIndicator.turnOn();
-  g_battery_level = battery.getVoltage();
+  g_battery_level = battery.getVoltage(V_REF_BAT);
   DPRINT(F("battery voltage is "));
   DPRINTLN(g_battery_level);
 
@@ -508,15 +508,18 @@ void showFirmwareVersion(void)
 {
   if (Serial && g_serial_is_read == 0)
   {
+    // set Voltage reference to 5 V
+     ;
     Serial.println(F(" * ------------------- Kilometer Air ------------------ * "));
     Serial.println(" Firmware Version: " + String(FIRMWARE_VERSION));
     Serial.println(" ID Device       : " + String(ID_DEVICE));
     Serial.println(" Corporation     : " + String(CORPORATION));
     Serial.println(F(" * ----------------------- *** ----------------------- * "));
     Serial.println(F(" Device info: "));
-    Serial.println(" * Battery Level         : " + String(battery.getVoltage()) + " Volt");
+    Serial.println(" * Battery Level         : " + String(battery.getVoltage(V_REF_SERIAL)) + " Volt");
     Serial.println(" * Water volume used     : " + String(g_total_volume) + " Liters");
     Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
+    Serial.println(" * Phone registered      : " + g_phone_number);
     Serial.flush();
     g_serial_is_read = 1;
   }
