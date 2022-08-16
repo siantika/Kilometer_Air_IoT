@@ -330,8 +330,8 @@ void handlingCommandFromSms(void)
   DPRINT(F("Water volume is "));
   DPRINT(g_total_volume);
   DPRINTLN(F(" Liters"));
-
-  g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai " + String(g_battery_level) + " V. \n 2. Volume air terpakai " + String(g_total_volume) + " L.\n 3. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
+  // Set battery level to NULL --> it's not using batterry now
+  g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai NULL \n 2. Volume air terpakai " + String(g_total_volume) + " L.\n 3. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
   sim800.sendSMS(g_msg_content, g_phone_number);
   ledIndicator.turnOff();
 }
@@ -514,7 +514,7 @@ void showFirmwareVersion(void)
     Serial.println(" Corporation     : " + String(CORPORATION));
     Serial.println(F(" * ----------------------- *** ----------------------- * "));
     Serial.println(F(" Device info: "));
-    Serial.println(" * Battery Level         : " + String(battery.getVoltage(V_REF_SERIAL)) + " Volt");
+    // Serial.println(" * Battery Level         : " + String(battery.getVoltage(V_REF_SERIAL)) + " Volt"); // not using battery
     Serial.println(" * Water volume used     : " + String(g_total_volume) + " Liters");
     Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
     Serial.println(" * Phone registered      : " + g_phone_number);

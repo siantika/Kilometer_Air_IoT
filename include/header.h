@@ -23,4 +23,6 @@
 #define LED_INTERVAL_200 200         // ms
 #define LED_INTERVAL_GET_PHONE 800   // ms
 #define LED_INTERVAL_SET_ALARM 500   // ms
+#define SIM_NORMAL_OPT_DELAY delay(500);
+
 #endif
