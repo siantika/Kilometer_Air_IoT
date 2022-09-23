@@ -131,7 +131,7 @@ void loop(void)
 
     case 2:
     {
-      blinkLedIndicator(LED_INTERVAL_200);
+      
       callUserInPeriodicTime();
       nextStateFunction_opt0();
     }
@@ -139,7 +139,6 @@ void loop(void)
 
     case 3:
     {
-      ledIndicator.turnOff();
       getComandFromSms();
       nextStateFunction_opt0();
     }
@@ -258,7 +257,7 @@ void permitToMainCode(void)
   if (g_flag_alarm_duration_to_run * g_flag_phone_num_to_run != 1)
   {
 
-    while (g_opt_mode != 1)
+    while (1) // hot fixes
       blinkLedIndicator(LED_INTERVAL_200);
   }
 }
@@ -301,7 +300,7 @@ void readWaterVolumeAndWaterflowDuration(void)
 
 void callUserInPeriodicTime(void)
 {
-
+  blinkLedIndicator(LED_INTERVAL_200);
   g_current_time_call = millis();
   if (g_current_time_call - g_prev_time_call >= g_call_time_interval)
   {
@@ -315,6 +314,7 @@ void callUserInPeriodicTime(void)
 
 void getComandFromSms(void)
 {
+  ledIndicator.turnOff();
   g_call_time_interval = FIRST_CALL_TIME_DURATION;
   g_get_command_sms = sim800.readSMS();
   g_get_command_sms.toLowerCase();
