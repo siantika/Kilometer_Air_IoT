@@ -11,7 +11,7 @@
 #include "io_mapping.h"
 
 // Enable or disable debug message (#define DEBUG)
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
@@ -29,12 +29,31 @@ ComInterface::ComInterface()
   sim800Serial.begin(BAUDRATE_SIM800);
 }
 
-void ComInterface::init()
+int ComInterface::init()
 {
   // setup for SMS
   sim800Serial.println("AT");
   DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
+  serialFlush();                    
+  sim800Serial.println("AT+CPIN?"); 
+  DEBUG_PRINT
+  SIM_NORMAL_OPT_DELAY
+
+  // check sim card availability
+  // if length >= 18 --> error
+  // less thant that --> okay
+  status = replySerial();
+  
+  if (status.length() >= ERROR_CPIN)
+  {
+    return -1;
+  }
+  else
+  {
+    return 1;
+  }
+
   sim800Serial.println("AT+CMGF=1");
   DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
@@ -154,16 +173,20 @@ void ComInterface::sleepSIM800(byte SLEEP_MODE)
 }
 
 /* Private method */
-void ComInterface::replySerial()
+String ComInterface::replySerial()
 {
-  while (Serial.available())
-  {
-    sim800Serial.write(Serial.read()); // Forward what Serial received to Software Serial Port
-  }
+  getReply = "";
+  // while (Serial.available())
+  // {
+  //   sim800Serial.write(Serial.read()); // Forward what Serial received to Software Serial Port (SIM800)
+  // }
   while (sim800Serial.available())
   {
-    Serial.write(sim800Serial.read()); // Forward what Software Serial received to Serial Port
+    // Serial.write(sim800Serial.read()); // Forward what Software Serial received to Serial Port
+    getReply += (char)sim800Serial.read();
   }
+  Serial.print(getReply);
+  return getReply;
 }
 
 // clear serial buffer in Serial and Sim800 serial

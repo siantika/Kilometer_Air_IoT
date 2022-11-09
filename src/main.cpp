@@ -36,6 +36,7 @@ bool mLed_state;
 bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
 uint16_t g_alarm_water_threshold;
 uint16_t g_call_time_interval;
+int g_status_sim; 
 float g_total_volume;
 float g_battery_level;
 float g_water_flow;
@@ -63,7 +64,7 @@ IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator{PIN_LED_INDICATOR};
 /* forward functions declaration */
 String readStringFromEEPROM(int addrOffset);
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
-bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec);
+//bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec); --> next release !!
 void readWaterVolumeAndWaterflowDuration(void);
 void blinkLedIndicator(uint16_t mLed_interval);
 void nextStateFunction_opt1(void);
@@ -85,7 +86,16 @@ void setup(void)
 {
   delay(3000); // Minimum is 3 secs (Initialization for SIM800L. Check Datasheet: https://www.filipeflop.com/img/files/download/Datasheet_SIM800L.pdf / p.24)
   Serial.begin(9600);
-  sim800.init();
+  g_status_sim = sim800.init();
+   // permit to run main code
+  // no SIM Card inserted
+  if (g_status_sim == -1)
+  {
+    while (1)
+    {
+      blinkLedIndicator(LED_INTERVAL_800);
+    }
+  }
   sim800.sleepSIM800(SIM800_SLEEP_MODE);
   waterFlow.init();
 
@@ -252,12 +262,12 @@ void permitToMainCode(void)
     g_flag_alarm_duration_to_run = 0;
     DPRINTLN(F("No alarm duration"));
   }
-
-  // permit to run main code
+    
+  
   if (g_flag_alarm_duration_to_run * g_flag_phone_num_to_run != 1)
   {
 
-    while (1) // hot fixes
+    while (1) 
       blinkLedIndicator(LED_INTERVAL_200);
   }
 }
@@ -269,7 +279,6 @@ void readWaterVolumeAndWaterflowDuration(void)
 {
   // It gets water volume and water flow. its store in g_total_volume and g_water_flow(private)
   // it gets time duration and store it in g_duration_time
-
   g_current_time_read_water = millis();
 
   if (g_current_time_read_water - g_prev_time_read_water >= WATER_READ_INTERVAL)
