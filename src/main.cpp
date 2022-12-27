@@ -38,7 +38,6 @@ uint16_t g_alarm_water_threshold;
 uint16_t g_call_time_interval;
 int g_status_sim; 
 float g_total_volume;
-float g_battery_level;
 float g_water_flow;
 String g_phone_number;
 String g_msg_content;
@@ -57,14 +56,12 @@ const float CALLIBRATION_KWA = 0.48; // (liter) Self callibration (Instrumentati
 /* Creating instances */
 ComInterface sim800;
 WaterFlow waterFlow{PIN_WATER_FLOW};
-Battery battery{PIN_BATTERY};
 IndicatorInterface<TypeEnum::__INPUT> buttonOpt{PIN_BUTTON_OPT}; // using curly bracket because it prevents constructor casting parameter (if you use (), it does casting)
 IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator{PIN_LED_INDICATOR};
 
 /* forward functions declaration */
 String readStringFromEEPROM(int addrOffset);
 void writeStringToEEPROM(int addrOffset, const String &strToWrite);
-//bool dailySendReport(uint8_t hour, uint8_t minute, uint8_t sec); --> next release !!
 void readWaterVolumeAndWaterflowDuration(void);
 void blinkLedIndicator(uint16_t mLed_interval);
 void nextStateFunction_opt1(void);
@@ -93,9 +90,10 @@ void setup(void)
   {
     while (1)
     {
-      blinkLedIndicator(LED_INTERVAL_800);
+      blinkLedIndicator(0);
     }
   }
+
   sim800.sleepSIM800(SIM800_SLEEP_MODE);
   waterFlow.init();
 
@@ -110,7 +108,10 @@ void setup(void)
   g_state = 1; // make it jumps to case 1 (default)
   g_call_time_interval = FIRST_CALL_TIME_DURATION;
 
-  /* detect operation mode */
+  /* detect operation mode (Mode )
+    LOW (0)  = operation 0 --> monitor the water flow
+    HIGH (1) = operation 1 --> setup a credential
+  */
   g_opt_mode = buttonOpt.getInputDigital();
 
   /* prerequisite check */
@@ -332,15 +333,11 @@ void getComandFromSms(void)
 void handlingCommandFromSms(void)
 {
   ledIndicator.turnOn();
-  g_battery_level = battery.getVoltage(V_REF_BAT);
-  DPRINT(F("battery voltage is "));
-  DPRINTLN(g_battery_level);
-
   DPRINT(F("Water volume is "));
   DPRINT(g_total_volume);
   DPRINTLN(F(" Liters"));
 
-  g_msg_content = "*** INFO PERANGKAT ***\n 1. Tegangan baterai " + String(g_battery_level) + " V. \n 2. Volume air terpakai " + String(g_total_volume) + " L.\n 3. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
+  g_msg_content = "*** INFO PERANGKAT ***\n 1. Volume air terpakai " + String(g_total_volume) + " L.\n 2. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
   sim800.sendSMS(g_msg_content, g_phone_number);
   ledIndicator.turnOff();
 }
@@ -523,7 +520,6 @@ void showFirmwareVersion(void)
     Serial.println(" Corporation     : " + String(CORPORATION));
     Serial.println(F(" * ----------------------- *** ----------------------- * "));
     Serial.println(F(" Device info: "));
-    Serial.println(" * Battery Level         : " + String(battery.getVoltage(V_REF_SERIAL)) + " Volt");
     Serial.println(" * Water volume used     : " + String(g_total_volume) + " Liters");
     Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
     Serial.println(" * Phone registered      : " + g_phone_number);
