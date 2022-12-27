@@ -44,10 +44,14 @@ int ComInterface::init()
   // if length >= 18 --> error
   // less thant that --> okay
   status = replySerial();
+
+  // Debug
+  Serial.println(status.length());
   
+  /* SIM is inserted (Ready to next process) */
   if (status.length() >= ERROR_CPIN)
   {
-    return -1;
+    return 0;
   }
   else
   {

@@ -87,9 +87,9 @@ void setup(void)
   delay(3000); // Minimum is 3 secs (Initialization for SIM800L. Check Datasheet: https://www.filipeflop.com/img/files/download/Datasheet_SIM800L.pdf / p.24)
   Serial.begin(9600);
   g_status_sim = sim800.init();
-   // permit to run main code
-  // no SIM Card inserted
-  if (g_status_sim == -1)
+  
+  /* no SIM Card inserted, blink the led and stuck*/
+  if (g_status_sim == 1)
   {
     while (1)
     {

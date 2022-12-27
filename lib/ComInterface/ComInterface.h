@@ -5,7 +5,7 @@
 #include "header.h"
 
 #define BAUDRATE_SIM800 9600 // bps
-#define ERROR_CPIN 17 // error length in AT+CPIN's response (no sim card)
+#define ERROR_CPIN 20 // error length in AT+CPIN's response (no sim card)
 
 #define MAX_SMS_CHAR 15
 
