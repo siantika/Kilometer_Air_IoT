@@ -11,7 +11,7 @@
 #include "io_mapping.h"
 
 // Enable or disable debug message (#define DEBUG)
-// #define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
@@ -29,6 +29,7 @@ ComInterface::ComInterface()
 
 int ComInterface::init()
 {
+  int status_sim = 0;
   /* setup for SMS */
   sim800Serial.println("AT");
   DEBUG_PRINT
@@ -43,11 +44,11 @@ int ComInterface::init()
   /* checking SIM availability */
   if (status.length() >= ERROR_CPIN)
   {
-    return 0; // SIM is available
+    status_sim = 0; // SIM is available
   }
   else
   {
-    return 1; // SIM is not available
+    status_sim = 1; // SIM is not available
   }
 
   sim800Serial.println("AT+CMGF=1");
@@ -59,6 +60,7 @@ int ComInterface::init()
   sim800Serial.println();
   DEBUG_PRINT
   SIM_NORMAL_OPT_DELAY
+  return status_sim;
 }
 
 String ComInterface::getPhone()
@@ -174,7 +176,7 @@ String ComInterface::replySerial()
   getReply = "";
   while (sim800Serial.available())
   {
-    getReply += (char)sim800Serial.read();
+   getReply += (char)sim800Serial.read();
   }
   return getReply;
 }

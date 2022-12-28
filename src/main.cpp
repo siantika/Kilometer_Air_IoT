@@ -77,6 +77,7 @@ void handlingCommandFromSms(void);
 void checkingOperationMode(void);
 void hangUpCall(void);
 void showFirmwareVersion(void);
+void(* resetFunc) (void) = 0;//reset the harwader
 
 /* Setup */
 void setup(void)
@@ -123,7 +124,7 @@ void setup(void)
 void loop(void)
 {
   // show software version when serial available (once)
-  showFirmwareVersion();
+ showFirmwareVersion();
   if (g_opt_mode == 0)
   {
 
@@ -219,8 +220,9 @@ void loop(void)
 
     case 6:
     {
-      // idle
       // device should be restarted and move the operation switch to mode 0 !
+      resetFunc();
+      
     }
     break;
 
@@ -360,6 +362,7 @@ void getPhoneNumber(void)
 {
   blinkLedIndicator(LED_INTERVAL_GET_PHONE);
   g_phone_number = sim800.getPhone();
+  Serial.println(g_phone_number);
 }
 
 void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char msg_type)
