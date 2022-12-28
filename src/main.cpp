@@ -34,6 +34,7 @@ bool g_serial_is_read;
 bool g_call_status;
 bool mLed_state;
 bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
+char  selected_msg_type ='A';
 uint16_t g_alarm_water_threshold;
 uint16_t g_call_time_interval;
 int g_status_sim; 
@@ -213,7 +214,8 @@ void loop(void)
 
     case 5:
     {
-      storeAndNotifySms(ADDR_ALARM_DURATION, String(g_alarm_water_threshold), 'A');
+     
+      storeAndNotifySms(ADDR_ALARM_DURATION, String(g_alarm_water_threshold), selected_msg_type);
       nextStateFunction_opt1();
     }
     break;
@@ -362,7 +364,6 @@ void getPhoneNumber(void)
 {
   blinkLedIndicator(LED_INTERVAL_GET_PHONE);
   g_phone_number = sim800.getPhone();
-  Serial.println(g_phone_number);
 }
 
 void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char msg_type)
@@ -374,6 +375,8 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
     mMsg_content = MSG_NOTIFY_REG;
   else if (msg_type == 'A')                                                                                                                          // Alarm message notify                                                                                                                        // alarm message notify
     mMsg_content = "Alarm diatur di " + String(data_to_write_in_eeprom) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !"; // HERE is a content of message sent to user
+  else if(msg_type == 'R')
+    mMsg_content = "Data Diperbaharui ! \n No Hp:" + g_phone_number +"\n Alarm diatur di :" + String(data_to_write_in_eeprom) + ", alat melakukan restart otomatis !"; // HERE is a content of message sent to user
   sim800.sendSMS(mMsg_content, g_phone_number);
 }
 
@@ -418,7 +421,13 @@ void nextStateFunction_opt0(void)
     {
       g_state = 4; // move to handlingCommandFromSms
     }
-    else
+    else if (g_get_command_sms == "set_no")
+    {
+      g_opt_mode = 1; // go to setup account 
+      selected_msg_type = 'R'; // set the messag content in setup acount for updating data and not initial account setup!
+
+    }
+    
     {
       g_state = 1; // move to readWaterVolumeAndWaterflowDuration
     }
