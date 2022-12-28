@@ -520,7 +520,6 @@ void showFirmwareVersion(void)
     Serial.println(" Corporation     : " + String(CORPORATION));
     Serial.println(F(" * ----------------------- *** ----------------------- * "));
     Serial.println(F(" Device info: "));
-    Serial.println(" * Water volume used     : " + String(g_total_volume) + " Liters");
     Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
     Serial.println(" * Phone registered      : " + g_phone_number);
     Serial.flush();
