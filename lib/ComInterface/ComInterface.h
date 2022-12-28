@@ -6,7 +6,7 @@
 
 #define BAUDRATE_SIM800 9600 // bps
 #define ERROR_CPIN 20 // max error length in AT+CPIN's response (no sim card), more than that, means sim is available
-
+#define SIM_NORMAL_OPT_DELAY delay(500);
 #define MAX_SMS_CHAR 15
 
 class ComInterface

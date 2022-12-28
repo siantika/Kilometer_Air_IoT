@@ -19,8 +19,6 @@
 #define DEBUG_PRINT // disable replySerial function
 #endif
 
-#define SIM_NORMAL_OPT_DELAY delay(500);
-
 SoftwareSerial sim800Serial(SIM_RX, SIM_TX);
 
 // constructor

@@ -1,3 +1,5 @@
+
+
 #include "SensorInterface.h"
 
 SensorInterface ::SensorInterface()
@@ -63,7 +65,7 @@ Battery::Battery(uint8_t mSensor_pin)
 // private methods
 uint16_t Battery::readAnalogData()
 {
-    return mAnalog_data = analogRead(mSensor_pin);
+    return mAnalog_data = analogRead(mSensor_pin); // changeeee
 }
 
 // public methods
@@ -73,8 +75,8 @@ float Battery::getVoltage(float mVrefPin)
     // Resistors value
     float mVoltage_in; // input voltage from sensor
     float mVoltage_read;
-    const float mR1 = 20000.0; // ohm (MAKE SURE THE VALUE OF THE RESISTOR IS PRECISE!!!)
-    const float mR2 = 4700.0;  // ohm
+    const float mR1 = 19500.0; // ohm (MAKE SURE THE VALUE OF THE RESISTOR IS PRECISE!!!)
+    const float mR2 = 4564.0;  // ohm
 
     mAnalog_data = Battery::readAnalogData(); //
 
