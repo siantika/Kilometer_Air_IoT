@@ -2,8 +2,15 @@
  * Created by: I Putu Pawesi Siantika. email: csiantka@gmail.com. Jun 2022 *
  * Kilometer Air IoT Version 1.0 (BETA)                                    *
  * Monitoring water volume and alarming when leakage ocurred               *
- * This is Private Code.                                                   *
- * Thankyou ...                                                            *
+ *  ********************************************************************
+ 
+"This program is free software: you can redistribute it and/or modify 
+ it under the terms of the GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or (at your option) any later version.
+ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+ See the GNU General Public License for more details.""
+ *                                                                         *
  ***************************************************************************
  */
 
@@ -78,7 +85,7 @@ void handlingCommandFromSms(void);
 void checkingOperationMode(void);
 void hangUpCall(void);
 void showFirmwareVersion(void);
-void(* resetFunc) (void) = 0;//reset the harwader
+void(* resetFunc) (void) = 0;//reset the hardware
 
 /* Setup */
 void setup(void)

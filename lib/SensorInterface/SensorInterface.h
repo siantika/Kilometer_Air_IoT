@@ -4,6 +4,12 @@
 #include <Arduino.h>
 #include "header.h"
 
+#ifndef ADC_RESOLUTION
+#define ADC_RESOLUTION 1023 // default ADC value (10-bit), please declare the intended value in header file and include it here.
+
+#endif
+
+
 class SensorInterface
 {
 protected:
