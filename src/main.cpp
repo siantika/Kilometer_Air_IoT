@@ -62,7 +62,7 @@ const String MSG_NOTIFY_REG = "Nomor Anda telah teregistrasi. Silakan atur waktu
 const float CALLIBRATION_KWA = 0.48; // (liter) Self callibration (Instrumentation: Meteran Air Plastik AMB, loc: Bali, IDN, 4 Jun 2022)
 
 /* Creating instances */
-ComInterface sim800;
+ComInterface comInterface;
 WaterFlow waterFlow{PIN_WATER_FLOW};
 IndicatorInterface<TypeEnum::__INPUT> buttonOpt{PIN_BUTTON_OPT}; // using curly bracket because it prevents constructor casting parameter (if you use (), it does casting)
 IndicatorInterface<TypeEnum::__OUTPUT> ledIndicator{PIN_LED_INDICATOR};
@@ -93,18 +93,18 @@ void setup(void)
 
   delay(3000); // Minimum is 3 secs (Initialization for SIM800L. Check Datasheet: https://www.filipeflop.com/img/files/download/Datasheet_SIM800L.pdf / p.24)
   Serial.begin(9600);
-  g_status_sim = sim800.init();
+  g_status_sim = comInterface.init();
 
   /* no SIM Card inserted, blink the led and stuck*/
-  // if (g_status_sim == 1)
-  // {
-  //   while (1)
-  //   {
-  //     blinkLedIndicator(0);
-  //   }
-  // }
+  if (g_status_sim == 1)
+  {
+    while (1)
+    {
+      blinkLedIndicator(0);
+    }
+  }
 
-  sim800.sleepSIM800(SIM800_SLEEP_MODE);
+  comInterface.sleepMode(SIM800_SLEEP_MODE);
   waterFlow.init();
 
   /* initial value */
@@ -144,7 +144,7 @@ void loop(void)
     {
       /* Operation mode 0. monitoring water volume and flow.
         + @param (String) g_get_command_sms .
-        + input parameter using sms from user through sim800.serial() in comInterface lib.
+        + input parameter using sms from user through comInterface.serial() in comInterface lib.
       */
 
     case 1:
@@ -190,7 +190,7 @@ void loop(void)
   {
     /* Operation mode 1. Setup a credential.
       + @param (String) g_phone_g_phone_number, (uint16_t) g_alarm_water_threshold .
-      + input parameter using sms from user through sim800.serial() in comInterface lib.
+      + input parameter using sms from user through comInterface.serial() in comInterface lib.
     */
     switch (g_state)
     {
@@ -333,7 +333,7 @@ void callUserInPeriodicTime(void)
     g_call_status = 1; // it is happening for calling
     g_call_time_interval = MAX_CALL_TIME_INTERVAL;
     g_prev_time_call = g_current_time_call;
-    sim800.phoneCall(g_phone_number);
+    comInterface.phoneCall(g_phone_number);
     DPRINTLN(F("Calling User..."));
   }
 }
@@ -342,7 +342,7 @@ void getComandFromSms(void)
 {
   ledIndicator.turnOff();
   g_call_time_interval = FIRST_CALL_TIME_DURATION;
-  g_get_command_sms = sim800.readSMS();
+  g_get_command_sms = comInterface.readSMS();
   g_get_command_sms.toLowerCase();
 }
 
@@ -354,13 +354,13 @@ void handlingCommandFromSms(void)
   DPRINTLN(F(" Liters"));
 
   g_msg_content = "*** INFO PERANGKAT ***\n 1. Volume air terpakai " + String(g_total_volume) + " L.\n 2. Durasi alarm " + String(g_alarm_water_threshold) + " dtk.";
-  sim800.sendSMS(g_msg_content, g_phone_number);
+  comInterface.sendSMS(g_msg_content, g_phone_number);
   ledIndicator.turnOff();
 }
 
 void hangUpCall(void)
 {
-  sim800.hangUpcall();
+  comInterface.hangUpcall();
   g_call_status = 0; // reset it
 }
 
@@ -374,7 +374,7 @@ void initState(void)
 void getPhoneNumber(void)
 {
   blinkLedIndicator(LED_INTERVAL_GET_PHONE);
-  g_phone_number = sim800.getPhone();
+  g_phone_number = comInterface.getPhone();
 }
 
 void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char msg_type)
@@ -388,13 +388,13 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
     mMsg_content = "Alarm diatur di " + String(data_to_write_in_eeprom) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !"; // HERE is a content of message sent to user
   else if (msg_type == 'R')
     mMsg_content = "Data Diperbaharui ! \n No Hp:" + g_phone_number + "\n Alarm : " + String(data_to_write_in_eeprom) + " detik. \n alat melakukan restart otomatis !"; // HERE is a content of message sent to user
-  sim800.sendSMS(mMsg_content, g_phone_number);
+  comInterface.sendSMS(mMsg_content, g_phone_number);
 }
 
 void setAndGetWaterAlarmDuration(void)
 {
   blinkLedIndicator(LED_INTERVAL_SET_ALARM);
-  g_alarm_water_threshold = atoi(sim800.readSMS().c_str());
+  g_alarm_water_threshold = atoi(comInterface.readSMS().c_str());
 }
 
 /* State function for operation 0 */

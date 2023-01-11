@@ -4,7 +4,7 @@
 #include "SoftwareSerial.h"
 #include "header.h"
 
-#define BAUDRATE_SIM800 9600 // bps
+#define COM_SERIAL_BAUDRATE 9600 // bps
 #define ERROR_CPIN 20 // max error length in AT+CPIN's response (no sim card), more than that, means sim is available
 #define SIM_NORMAL_OPT_DELAY delay(500);
 #define MAX_SMS_CHAR 15
@@ -28,7 +28,7 @@ public:
   String readSMS();
   String getPhone();
   void sendSMS(String &messages, String &phoneNum);
-  void sleepSIM800(byte sleep_mode);
+  void sleepMode(byte sleep_mode);
   void hangUpcall(void);
   void phoneCall(String &phoneNum);
 };
