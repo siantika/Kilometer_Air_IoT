@@ -136,7 +136,7 @@ void loop(void)
 {
   // show software version when serial available (once)
   showFirmwareVersion();
- // Serial.println(g_state);
+  // Serial.println(g_state);
   if (g_opt_mode == 0)
   {
 
@@ -247,12 +247,6 @@ void loop(void)
 /* Bussines Logic end here*/
 /* *************************************************************************** */
 
-
-
-
-
-
-
 /* Functions */
 
 /* checking resources function */
@@ -350,7 +344,6 @@ void getComandFromSms(void)
   g_call_time_interval = FIRST_CALL_TIME_DURATION;
   g_get_command_sms = sim800.readSMS();
   g_get_command_sms.toLowerCase();
-  
 }
 
 void handlingCommandFromSms(void)
@@ -394,7 +387,7 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
   else if (msg_type == 'A')                                                                                                                          // Alarm message notify                                                                                                                        // alarm message notify
     mMsg_content = "Alarm diatur di " + String(data_to_write_in_eeprom) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !"; // HERE is a content of message sent to user
   else if (msg_type == 'R')
-    mMsg_content = "Data Diperbaharui ! \n No Hp:" + g_phone_number + "\n Alarm diatur di :" + String(data_to_write_in_eeprom) + ", alat melakukan restart otomatis !"; // HERE is a content of message sent to user
+    mMsg_content = "Data Diperbaharui ! \n No Hp:" + g_phone_number + "\n Alarm : " + String(data_to_write_in_eeprom) + " detik. \n alat melakukan restart otomatis !"; // HERE is a content of message sent to user
   sim800.sendSMS(mMsg_content, g_phone_number);
 }
 
@@ -442,9 +435,11 @@ void nextStateFunction_opt0(void)
     else if (g_get_command_sms == "set_no")
     {
       g_opt_mode = 1;          // go to setup account
-      selected_msg_type = 'R'; // set the messag content in setup acount for updating data and not initial account setup!
+      g_state = 1;             // jumps to first case in g_opt_1
+      selected_msg_type = 'R'; // set the message content in setup acount for updating data and not initial account setup!
     }
-    else{
+    else
+    {
       g_state = 1; // move to readWaterVolumeAndWaterflowDuration
     }
   }
