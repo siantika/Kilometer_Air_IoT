@@ -10,11 +10,11 @@
 #include "header.h"
 #include "io_mapping.h"
 
-// Enable or disable debug message (#define DEBUG)
-//#define DEBUG
+// Enable or disable serial reply from module (#define DEBUG_COM)
+//#define DEBUG_COM
 
-#ifdef DEBUG
-#define DEBUG_PRINT replySerial(); // show messages from UART SIM 800 and Arduino
+#ifdef DEBUG_COM
+#define DEBUG_PRINT replySerial(); // show messages from UART 
 #else
 #define DEBUG_PRINT // disable replySerial function
 #endif
@@ -176,7 +176,11 @@ String ComInterface::replySerial()
   getReply = "";
   while (sim800Serial.available())
   {
-   getReply += (char)sim800Serial.read();
+#ifndef DEBUG_COM
+    getReply += (char)sim800Serial.read();
+#else
+    Serial.println(sim800Serial.readString());
+#endif
   }
   return getReply;
 }

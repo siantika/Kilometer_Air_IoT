@@ -18,6 +18,6 @@
 #define PIN_WATER_FLOW 2 // interrupt number 0
 
 /* Battery Level Sensor's pin */
-#define PIN_BATTERY A7
+#define PIN_BATTERY A7 // deprecated, not used
 
 #endif

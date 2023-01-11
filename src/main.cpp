@@ -1,14 +1,14 @@
 /***************************************************************************
  * Created by: I Putu Pawesi Siantika. email: csiantka@gmail.com. Jun 2022 *
- * Kilometer Air IoT Version 1.0 (BETA)                                    *
+ * Water metering and alarming IoT Version 1.0 (BETA)                      *
  * Monitoring water volume and alarming when leakage ocurred               *
  *  ********************************************************************
- 
-"This program is free software: you can redistribute it and/or modify 
+
+"This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by the Free Software Foundation,
  either version 3 of the License, or (at your option) any later version.
  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  See the GNU General Public License for more details.""
  *                                                                         *
  ***************************************************************************
@@ -23,7 +23,7 @@
 #include "io_mapping.h"
 
 // Debug console
-//#define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
+// #define DEBUG // If you comment this line, the DPRINT & DPRINTLN lines are defined as blank.
 
 #ifdef DEBUG                                      // Macros are usually in all capital letters.
 #define DPRINT(...) Serial.print(__VA_ARGS__)     // DPRINT is a macro, debug print
@@ -41,10 +41,10 @@ bool g_serial_is_read;
 bool g_call_status;
 bool mLed_state;
 bool g_flag_phone_num_to_run, g_flag_alarm_duration_to_run;
-char  selected_msg_type ='A';
+char selected_msg_type = 'A';
 uint16_t g_alarm_water_threshold;
 uint16_t g_call_time_interval;
-int g_status_sim; 
+int g_status_sim;
 float g_total_volume;
 float g_water_flow;
 String g_phone_number;
@@ -85,7 +85,7 @@ void handlingCommandFromSms(void);
 void checkingOperationMode(void);
 void hangUpCall(void);
 void showFirmwareVersion(void);
-void(* resetFunc) (void) = 0;//reset the hardware
+void (*resetFunc)(void) = 0; // reset the hardware
 
 /* Setup */
 void setup(void)
@@ -94,15 +94,15 @@ void setup(void)
   delay(3000); // Minimum is 3 secs (Initialization for SIM800L. Check Datasheet: https://www.filipeflop.com/img/files/download/Datasheet_SIM800L.pdf / p.24)
   Serial.begin(9600);
   g_status_sim = sim800.init();
-  
+
   /* no SIM Card inserted, blink the led and stuck*/
-  if (g_status_sim == 1)
-  {
-    while (1)
-    {
-      blinkLedIndicator(0);
-    }
-  }
+  // if (g_status_sim == 1)
+  // {
+  //   while (1)
+  //   {
+  //     blinkLedIndicator(0);
+  //   }
+  // }
 
   sim800.sleepSIM800(SIM800_SLEEP_MODE);
   waterFlow.init();
@@ -128,11 +128,15 @@ void setup(void)
   permitToMainCode();
 }
 
-// Driver code
+/* *************************************************************************** */
+/* Bussines Logic */
+/* *************************************************************************** */
+
 void loop(void)
 {
   // show software version when serial available (once)
- showFirmwareVersion();
+  showFirmwareVersion();
+ // Serial.println(g_state);
   if (g_opt_mode == 0)
   {
 
@@ -152,7 +156,7 @@ void loop(void)
 
     case 2:
     {
-      
+
       callUserInPeriodicTime();
       nextStateFunction_opt0();
     }
@@ -221,7 +225,7 @@ void loop(void)
 
     case 5:
     {
-     
+
       storeAndNotifySms(ADDR_ALARM_DURATION, String(g_alarm_water_threshold), selected_msg_type);
       nextStateFunction_opt1();
     }
@@ -231,7 +235,6 @@ void loop(void)
     {
       // device should be restarted and move the operation switch to mode 0 !
       resetFunc();
-      
     }
     break;
 
@@ -240,8 +243,16 @@ void loop(void)
     }
   }
 }
+/* *************************************************************************** */
+/* Bussines Logic end here*/
+/* *************************************************************************** */
 
-/* *************************************** -- ************************************ */
+
+
+
+
+
+
 /* Functions */
 
 /* checking resources function */
@@ -275,12 +286,11 @@ void permitToMainCode(void)
     g_flag_alarm_duration_to_run = 0;
     DPRINTLN(F("No alarm duration"));
   }
-    
-  
+
   if (g_flag_alarm_duration_to_run * g_flag_phone_num_to_run != 1)
   {
 
-    while (1) 
+    while (1)
       blinkLedIndicator(LED_INTERVAL_200);
   }
 }
@@ -340,6 +350,7 @@ void getComandFromSms(void)
   g_call_time_interval = FIRST_CALL_TIME_DURATION;
   g_get_command_sms = sim800.readSMS();
   g_get_command_sms.toLowerCase();
+  
 }
 
 void handlingCommandFromSms(void)
@@ -382,8 +393,8 @@ void storeAndNotifySms(int eeprom_address, String data_to_write_in_eeprom, char 
     mMsg_content = MSG_NOTIFY_REG;
   else if (msg_type == 'A')                                                                                                                          // Alarm message notify                                                                                                                        // alarm message notify
     mMsg_content = "Alarm diatur di " + String(data_to_write_in_eeprom) + " detik. Silakan pindahkan tuas ke mode 0 dan hidupkan ulang daya alat !"; // HERE is a content of message sent to user
-  else if(msg_type == 'R')
-    mMsg_content = "Data Diperbaharui ! \n No Hp:" + g_phone_number +"\n Alarm diatur di :" + String(data_to_write_in_eeprom) + ", alat melakukan restart otomatis !"; // HERE is a content of message sent to user
+  else if (msg_type == 'R')
+    mMsg_content = "Data Diperbaharui ! \n No Hp:" + g_phone_number + "\n Alarm diatur di :" + String(data_to_write_in_eeprom) + ", alat melakukan restart otomatis !"; // HERE is a content of message sent to user
   sim800.sendSMS(mMsg_content, g_phone_number);
 }
 
@@ -430,12 +441,10 @@ void nextStateFunction_opt0(void)
     }
     else if (g_get_command_sms == "set_no")
     {
-      g_opt_mode = 1; // go to setup account 
+      g_opt_mode = 1;          // go to setup account
       selected_msg_type = 'R'; // set the messag content in setup acount for updating data and not initial account setup!
-
     }
-    
-    {
+    else{
       g_state = 1; // move to readWaterVolumeAndWaterflowDuration
     }
   }
@@ -534,13 +543,14 @@ void showFirmwareVersion(void)
   if (Serial && g_serial_is_read == 0)
   {
     // set Voltage reference to 5 V
-     ;
+    ;
     Serial.println(F(" * ------------------- Kilometer Air ------------------ * "));
     Serial.println(" Firmware Version: " + String(FIRMWARE_VERSION));
     Serial.println(" ID Device       : " + String(ID_DEVICE));
     Serial.println(" Corporation     : " + String(CORPORATION));
     Serial.println(F(" * ----------------------- *** ----------------------- * "));
-    Serial.println(F(" Device info: "));    Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
+    Serial.println(F(" Device info: "));
+    Serial.println(" * Alarm trigger duration: " + String(g_alarm_water_threshold) + " Secs");
     Serial.println(" * Phone registered      : " + g_phone_number);
     Serial.flush();
     g_serial_is_read = 1;
